@@ -57,7 +57,7 @@ entity order_items {
 entity payments {
     id : int <<PK>>
     order_id : int <<FK>>
-    payment_method : enum("transfer", "ewallt")
+    payment_method : enum("transfer", "ewallet")
     status : enum("pending, success, failed")
     paid_at : varchar
 }
