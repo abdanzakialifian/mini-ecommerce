@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"mini-ecommerce/internal/database"
 	"mini-ecommerce/internal/handler"
@@ -11,9 +12,11 @@ import (
 )
 
 func main() {
-	db, err := database.Connect()
+	ctx := context.Background()
+
+	db, err := database.Connect(ctx)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Failed to connect db m: %v", err)
 	}
 	defer db.Close()
 
@@ -23,5 +26,8 @@ func main() {
 
 	r := gin.Default()
 	r.GET("/products", productHandler.GetProducts)
-	r.Run(":8080")
+
+	if err := r.Run(":8080"); err != nil {
+		log.Fatalf("Server failed : %v", err)
+	}
 }

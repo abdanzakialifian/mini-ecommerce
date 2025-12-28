@@ -1,8 +1,8 @@
-package model
+package response
 
 import "time"
 
-type Product struct {
+type ProductResponse struct {
 	ID          string    `json:"id"`
 	CategoryID  string    `json:"category_id"`
 	Name        string    `json:"name"`
