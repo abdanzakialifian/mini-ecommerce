@@ -5,6 +5,7 @@ import (
 	"log"
 	"mini-ecommerce/internal/database"
 	"mini-ecommerce/internal/handler"
+	"mini-ecommerce/internal/middleware"
 	"mini-ecommerce/internal/repository"
 	"mini-ecommerce/internal/service"
 
@@ -24,7 +25,14 @@ func main() {
 	productService := service.NewProductServiceImpl(productRepository)
 	productHandler := handler.NewProductHandler(productService)
 
-	r := gin.Default()
+	r := gin.New()
+
+	r.Use(
+		middleware.Logger(),
+		middleware.ErrorHandler(),
+		middleware.RequestID(),
+	)
+
 	r.GET("/products", productHandler.GetProducts)
 
 	if err := r.Run(":8080"); err != nil {

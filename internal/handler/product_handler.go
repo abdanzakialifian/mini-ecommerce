@@ -3,7 +3,6 @@ package handler
 import (
 	"mini-ecommerce/internal/domain"
 	"mini-ecommerce/internal/handler/response"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,14 +16,9 @@ func NewProductHandler(service domain.ProductService) *ProductHandler {
 }
 
 func (h *ProductHandler) GetProducts(c *gin.Context) {
-	products, err := h.service.GetProducts(c.Request.Context())
-	if err != nil {
-		status, res := response.Error(
-			"Failed Get Products",
-			err.Error(),
-			http.StatusInternalServerError,
-		)
-		c.JSON(status, res)
+	products, appErr := h.service.GetProducts(c.Request.Context())
+	if appErr != nil {
+		c.Error(appErr)
 		return
 	}
 	status, res := response.Success(
