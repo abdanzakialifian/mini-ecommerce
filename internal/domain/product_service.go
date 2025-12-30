@@ -7,5 +7,6 @@ import (
 )
 
 type ProductService interface {
+	CreateProduct(ctx context.Context, product *model.Product) *helper.AppError
 	GetProducts(ctx context.Context) ([]model.Product, *helper.AppError)
 }

@@ -33,6 +33,7 @@ func main() {
 		middleware.RequestID(),
 	)
 
+	r.POST("/products", productHandler.CreateProduct)
 	r.GET("/products", productHandler.GetProducts)
 
 	if err := r.Run(":8080"); err != nil {

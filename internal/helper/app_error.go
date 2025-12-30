@@ -12,3 +12,11 @@ func (e *AppError) Error() string {
 	}
 	return e.Message
 }
+
+func NewAppError(statusCode int, message string, err error) *AppError {
+	return &AppError{
+		StatusCode: statusCode,
+		Message:    message,
+		Err:        err,
+	}
+}

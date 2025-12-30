@@ -17,30 +17,36 @@ func ErrorHandler() gin.HandlerFunc {
 			return
 		}
 
-		err := c.Errors.Last().Err
+		for _, ginErr := range c.Errors {
+			var appErr *helper.AppError
 
-		var appErr *helper.AppError
+			if errors.As(ginErr, &appErr) {
+				var detail any
+				if appErr.Err != nil {
+					detail = appErr.Err.Error()
+				}
 
-		if errors.As(err, &appErr) {
-			status, res := response.Error(
-				appErr.Message,
-				func() any {
-					if appErr.Err != nil {
-						return appErr.Err.Error()
-					}
-					return nil
-				}(),
-				appErr.StatusCode,
-			)
-			c.JSON(status, res)
-			return
+				status, res := response.Error(
+					appErr.Message,
+					detail,
+					appErr.StatusCode,
+				)
+
+				c.JSON(status, res)
+				c.Abort()
+				return
+			}
 		}
+
+		lastErr := c.Errors.Last().Err
 
 		status, res := response.Error(
 			"Internal Server Error",
-			err.Error(),
+			lastErr.Error(),
 			http.StatusInternalServerError,
 		)
+
 		c.JSON(status, res)
+		c.Abort()
 	}
 }
