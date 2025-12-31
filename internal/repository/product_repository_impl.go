@@ -97,3 +97,17 @@ func (p *productRepositoryImpl) Update(ctx context.Context, product *model.Produ
 
 	return nil
 }
+
+func (p *productRepositoryImpl) Delete(ctx context.Context, id string) error {
+	query := "DELETE FROM products WHERE id = $1"
+	cmd, err := p.db.Exec(ctx, query, id)
+	if err != nil {
+		return err
+	}
+
+	if cmd.RowsAffected() == 0 {
+		return domain.ErrProductNotFound
+	}
+
+	return nil
+}

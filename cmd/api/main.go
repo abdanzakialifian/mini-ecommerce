@@ -36,6 +36,7 @@ func main() {
 	r.POST("/products", productHandler.CreateProduct)
 	r.GET("/products", productHandler.GetProducts)
 	r.PUT("/products", productHandler.UpdateProduct)
+	r.DELETE("/products/:id", productHandler.DeleteProduct)
 
 	if err := r.Run(":8080"); err != nil {
 		log.Fatalf("Server failed : %v", err)

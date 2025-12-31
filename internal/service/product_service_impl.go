@@ -72,3 +72,25 @@ func (p *productServiceImpl) UpdateProduct(ctx context.Context, product *model.P
 
 	return nil
 }
+
+func (p *productServiceImpl) DeleteProduct(ctx context.Context, id string) *helper.AppError {
+	err := p.repository.Delete(ctx, id)
+
+	if err != nil {
+		if errors.Is(err, domain.ErrProductNotFound) {
+			return helper.NewAppError(
+				http.StatusNotFound,
+				"Product Not Found",
+				err,
+			)
+		}
+
+		return helper.NewAppError(
+			http.StatusInternalServerError,
+			"Internal Server Error",
+			err,
+		)
+	}
+
+	return nil
+}

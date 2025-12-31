@@ -12,6 +12,13 @@ func Success(message string, data any) (int, BaseResponse) {
 	}
 }
 
+func SuccessNoContent(message string) (int, BaseResponse) {
+	return http.StatusNoContent, BaseResponse{
+		Success: true,
+		Message: message,
+	}
+}
+
 func Created(message string, data any) (int, BaseResponse) {
 	return http.StatusCreated, BaseResponse{
 		Success: true,

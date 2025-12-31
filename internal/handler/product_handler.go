@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"mini-ecommerce/internal/domain"
 	"mini-ecommerce/internal/handler/request"
 	"mini-ecommerce/internal/handler/response"
@@ -77,5 +78,27 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 		"Success Update Product",
 		toProductResponse(product),
 	)
+	c.JSON(status, res)
+}
+
+func (h *ProductHandler) DeleteProduct(c *gin.Context) {
+	id := c.Param("id")
+
+	if id == "" {
+		c.Error(helper.NewAppError(
+			http.StatusBadRequest,
+			"Invalid Request Body",
+			errors.New("Product id is required"),
+		))
+		return
+	}
+
+	err := h.service.DeleteProduct(c.Request.Context(), id)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	status, res := response.SuccessNoContent("Success Deleted Product")
 	c.JSON(status, res)
 }
