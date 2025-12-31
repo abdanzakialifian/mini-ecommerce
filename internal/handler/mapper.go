@@ -37,12 +37,23 @@ func toProductResponse(product model.Product) response.ProductResponse {
 	}
 }
 
-func toProduct(product request.CreateProductRequest) model.Product {
+func toProductFromCreate(req request.CreateProductRequest) model.Product {
 	return model.Product{
-		CategoryID:  product.CategoryID,
-		Name:        product.Name,
-		Description: product.Description,
-		Price:       product.Price,
-		Stock:       product.Stock,
+		CategoryID:  req.CategoryID,
+		Name:        req.Name,
+		Description: req.Description,
+		Price:       req.Price,
+		Stock:       req.Stock,
+	}
+}
+
+func toProductFromUpdate(req request.UpdateProductRequest) model.Product {
+	return model.Product{
+		ID:          req.ID,
+		CategoryID:  req.CategoryID,
+		Name:        req.Name,
+		Description: req.Description,
+		Price:       req.Price,
+		Stock:       req.Stock,
 	}
 }

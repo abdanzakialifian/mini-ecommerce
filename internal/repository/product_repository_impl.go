@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"mini-ecommerce/internal/domain"
 	"mini-ecommerce/internal/domain/model"
@@ -19,7 +20,7 @@ func NewProductRepositoryImpl(db *pgxpool.Pool) domain.ProductRepository {
 }
 
 func (p *productRepositoryImpl) Create(ctx context.Context, product *model.Product) error {
-	query := `INSERT INTO products (category_id, name, description, price, stock) VALUES ($1, $2, $3, $4, $5) RETURNING id, created_at, updated_at`
+	query := "INSERT INTO products (category_id, name, description, price, stock) VALUES ($1, $2, $3, $4, $5) RETURNING id, created_at, updated_at"
 	err := p.db.QueryRow(
 		ctx,
 		query,
@@ -42,7 +43,8 @@ func (p *productRepositoryImpl) Create(ctx context.Context, product *model.Produ
 }
 
 func (p *productRepositoryImpl) FindAll(ctx context.Context) ([]model.Product, error) {
-	rows, err := p.db.Query(ctx, `SELECT id, category_id, name, description, price, stock, created_at, updated_at FROM products`)
+	query := "SELECT id, category_id, name, description, price, stock, created_at, updated_at FROM products"
+	rows, err := p.db.Query(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -71,4 +73,27 @@ func (p *productRepositoryImpl) FindAll(ctx context.Context) ([]model.Product, e
 	}
 
 	return products, nil
+}
+
+func (p *productRepositoryImpl) Update(ctx context.Context, product *model.Product) error {
+	query := "UPDATE products SET category_id = $1, name = $2, description = $3 , price = $4, stock = $5, updated_at = NOW() WHERE id = $6 RETURNING updated_at"
+	err := p.db.QueryRow(
+		ctx,
+		query,
+		product.CategoryID,
+		product.Name,
+		product.Description,
+		product.Price,
+		product.Stock,
+		product.ID,
+	).Scan(&product.UpdatedAt)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return domain.ErrProductNotFound
+		}
+		return err
+	}
+
+	return nil
 }
