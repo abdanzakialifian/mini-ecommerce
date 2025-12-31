@@ -34,6 +34,7 @@ func main() {
 	)
 
 	r.POST("/products", productHandler.CreateProduct)
+	r.GET("/products/:id", productHandler.GetProduct)
 	r.GET("/products", productHandler.GetProducts)
 	r.PUT("/products", productHandler.UpdateProduct)
 	r.DELETE("/products/:id", productHandler.DeleteProduct)

@@ -42,6 +42,35 @@ func (p *productRepositoryImpl) Create(ctx context.Context, product *model.Produ
 	return nil
 }
 
+func (p *productRepositoryImpl) Find(ctx context.Context, id string) (model.Product, error) {
+	query := "SELECT id, category_id, name, description, price, stock, created_at, updated_at FROM products WHERE id = $1"
+	var product model.Product
+	err := p.db.QueryRow(
+		ctx,
+		query,
+		id,
+	).Scan(
+		&product.ID,
+		&product.CategoryID,
+		&product.Name,
+		&product.Description,
+		&product.Price,
+		&product.Stock,
+		&product.CreatedAt,
+		&product.UpdatedAt,
+	)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return model.Product{}, domain.ErrProductNotFound
+		}
+
+		return model.Product{}, err
+	}
+
+	return product, nil
+}
+
 func (p *productRepositoryImpl) FindAll(ctx context.Context) ([]model.Product, error) {
 	query := "SELECT id, category_id, name, description, price, stock, created_at, updated_at FROM products"
 	rows, err := p.db.Query(ctx, query)

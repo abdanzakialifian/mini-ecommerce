@@ -38,6 +38,27 @@ func (p *productServiceImpl) CreateProduct(ctx context.Context, product *model.P
 	return nil
 }
 
+func (p *productServiceImpl) GetProduct(ctx context.Context, id string) (model.Product, *helper.AppError) {
+	product, err := p.repository.Find(ctx, id)
+	if err != nil {
+		if errors.Is(err, domain.ErrProductNotFound) {
+			return model.Product{}, helper.NewAppError(
+				http.StatusNotFound,
+				"Product Not Found",
+				err,
+			)
+		}
+
+		return model.Product{}, helper.NewAppError(
+			http.StatusInternalServerError,
+			"Internal Server Error",
+			err,
+		)
+	}
+
+	return product, nil
+}
+
 func (p productServiceImpl) GetProducts(ctx context.Context) ([]model.Product, *helper.AppError) {
 	products, err := p.repository.FindAll(ctx)
 	if err != nil {

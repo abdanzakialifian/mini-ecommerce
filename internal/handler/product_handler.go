@@ -43,6 +43,31 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 	c.JSON(status, res)
 }
 
+func (h *ProductHandler) GetProduct(c *gin.Context) {
+	id := c.Param("id")
+
+	if id == "" {
+		c.Error(helper.NewAppError(
+			http.StatusBadRequest,
+			"Invalid Request Body",
+			errors.New("Product id is required"),
+		))
+		return
+	}
+
+	product, err := h.service.GetProduct(c.Request.Context(), id)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	status, res := response.Success(
+		"Success Get Product",
+		toProductResponse(product),
+	)
+	c.JSON(status, res)
+}
+
 func (h *ProductHandler) GetProducts(c *gin.Context) {
 	products, appErr := h.service.GetProducts(c.Request.Context())
 	if appErr != nil {
