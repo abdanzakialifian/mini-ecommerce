@@ -91,7 +91,8 @@ func (p *productRepositoryImpl) FindAll(ctx context.Context) ([]model.Product, e
 			&product.Price,
 			&product.Stock,
 			&product.CreatedAt,
-			&product.UpdatedAt); err != nil {
+			&product.UpdatedAt,
+		); err != nil {
 			return nil, err
 		}
 		products = append(products, product)
