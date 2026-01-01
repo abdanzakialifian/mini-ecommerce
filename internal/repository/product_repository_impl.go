@@ -2,11 +2,11 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"mini-ecommerce/internal/domain"
 	"mini-ecommerce/internal/domain/model"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -61,7 +61,7 @@ func (p *productRepositoryImpl) Find(ctx context.Context, id string) (model.Prod
 	)
 
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return model.Product{}, domain.ErrProductNotFound
 		}
 
@@ -118,7 +118,7 @@ func (p *productRepositoryImpl) Update(ctx context.Context, product *model.Produ
 	).Scan(&product.UpdatedAt)
 
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return domain.ErrProductNotFound
 		}
 		return err
