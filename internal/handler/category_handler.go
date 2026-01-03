@@ -1,7 +1,12 @@
 package handler
 
 import (
+	"errors"
 	"mini-ecommerce/internal/domain"
+	"mini-ecommerce/internal/handler/request"
+	"mini-ecommerce/internal/handler/response"
+	"mini-ecommerce/internal/helper"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -15,21 +20,113 @@ func NewCategoryHandler(service domain.CategoryService) *CategoryHandler {
 }
 
 func (h *CategoryHandler) CreateCategory(c *gin.Context) {
-	panic("unimplemented")
+	var req request.CreateCategoryRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.Error(helper.NewAppError(
+			http.StatusBadRequest,
+			"Invalid Request Body",
+			err,
+		))
+		return
+	}
+
+	category := ToCategoryFromCreate(req)
+
+	if appErr := h.service.CreateCategory(c.Request.Context(), &category); appErr != nil {
+		c.Error(appErr)
+		return
+	}
+
+	status, res := response.Success(
+		"Success Create Product",
+		category,
+	)
+	c.JSON(status, res)
 }
 
 func (h *CategoryHandler) GetCategory(c *gin.Context) {
-	panic("unimplemented")
+	id := c.Param("id")
+	if id == "" {
+		c.Error(helper.NewAppError(
+			http.StatusBadRequest,
+			"Invalid Request Body",
+			errors.New("Category id is required"),
+		))
+		return
+	}
+
+	category, appErr := h.service.GetCategory(c.Request.Context(), id)
+	if appErr != nil {
+		c.Error(appErr)
+		return
+	}
+
+	status, res := response.Success(
+		"Success Get Category",
+		ToCategoryResponse(category),
+	)
+	c.JSON(status, res)
 }
 
 func (h *CategoryHandler) GetCategories(c *gin.Context) {
-	panic("unimplemented")
+	categories, appErr := h.service.GetCategories(c.Request.Context())
+	if appErr != nil {
+		c.Error(appErr)
+		return
+	}
+
+	status, res := response.Success(
+		"Success Get Categories",
+		ToCategoryResponses(categories),
+	)
+	c.JSON(status, res)
 }
 
 func (h *CategoryHandler) UpdateCategory(c *gin.Context) {
-	panic("unimplemented")
+	var req request.UpdateCategoryRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.Error(helper.NewAppError(
+			http.StatusBadRequest,
+			"Invalid Request Body",
+			err,
+		))
+		return
+	}
+
+	category := ToCategoryFromUpdate(req)
+
+	appErr := h.service.UpdateCategory(c.Request.Context(), &category)
+	if appErr != nil {
+		c.Error(appErr)
+		return
+	}
+
+	status, res := response.Success(
+		"Success Update Category",
+		category,
+	)
+	c.JSON(status, res)
 }
 
 func (h *CategoryHandler) DeleteCategory(c *gin.Context) {
-	panic("unimplemented")
+	id := c.Param("id")
+
+	if id == "" {
+		c.Error(helper.NewAppError(
+			http.StatusBadRequest,
+			"Invalid Request Body",
+			errors.New("Category id is required"),
+		))
+		return
+	}
+
+	err := h.service.DeleteCategory(c.Request.Context(), id)
+
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	status, res := response.SuccessNoContent("Success Delete Category")
+	c.JSON(status, res)
 }
