@@ -37,6 +37,18 @@ func toProductResponse(product model.Product) response.ProductResponse {
 	}
 }
 
+func toUpdateProductResponse(product model.UpdateProduct) response.UpdateProductResponse {
+	return response.UpdateProductResponse{
+		ID:          product.ID,
+		CategoryID:  product.CategoryID,
+		Name:        product.Name,
+		Description: product.Description,
+		Price:       product.Price,
+		Stock:       product.Stock,
+		UpdatedAt:   product.UpdatedAt,
+	}
+}
+
 func toProductFromCreate(req request.CreateProductRequest) model.Product {
 	return model.Product{
 		CategoryID:  req.CategoryID,
@@ -47,8 +59,8 @@ func toProductFromCreate(req request.CreateProductRequest) model.Product {
 	}
 }
 
-func toProductFromUpdate(req request.UpdateProductRequest) model.Product {
-	return model.Product{
+func toProductFromUpdate(req request.UpdateProductRequest) model.UpdateProduct {
+	return model.UpdateProduct{
 		ID:          req.ID,
 		CategoryID:  req.CategoryID,
 		Name:        req.Name,

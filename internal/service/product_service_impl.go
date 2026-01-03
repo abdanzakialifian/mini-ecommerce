@@ -72,7 +72,7 @@ func (p productServiceImpl) GetProducts(ctx context.Context) ([]model.Product, *
 	return products, nil
 }
 
-func (p *productServiceImpl) UpdateProduct(ctx context.Context, product *model.Product) *helper.AppError {
+func (p *productServiceImpl) UpdateProduct(ctx context.Context, product *model.UpdateProduct) *helper.AppError {
 	err := p.repository.Update(ctx, product)
 
 	if err != nil {

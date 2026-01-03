@@ -105,8 +105,8 @@ func (p *productRepositoryImpl) FindAll(ctx context.Context) ([]model.Product, e
 	return products, nil
 }
 
-func (p *productRepositoryImpl) Update(ctx context.Context, product *model.Product) error {
-	query := "UPDATE products SET category_id = $1, name = $2, description = $3 , price = $4, stock = $5, updated_at = NOW() WHERE id = $6 RETURNING updated_at"
+func (p *productRepositoryImpl) Update(ctx context.Context, product *model.UpdateProduct) error {
+	query := "UPDATE products SET category_id = COALESCE($1, category_id), name = COALESCE($2, name), description = COALESCE($3, description), price = COALESCE($4, price), stock = COALESCE($5, stock), updated_at = NOW() WHERE id = $6 RETURNING updated_at"
 	err := p.db.QueryRow(
 		ctx,
 		query,
