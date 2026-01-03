@@ -3,12 +3,13 @@ package domain
 import (
 	"context"
 	"mini-ecommerce/internal/domain/model"
+	"mini-ecommerce/internal/helper"
 )
 
 type CategoryService interface {
-	CreateCategory(ctx context.Context, category *model.Category) error
-	GetCategory(ctx context.Context, id string) error
-	GetCategories(ctx context.Context) ([]model.Category, error)
-	UpdateCategory(ctx context.Context, category *model.Category) error
-	DeleteCategory(ctx context.Context, id string) error
+	CreateCategory(ctx context.Context, category *model.Category) *helper.AppError
+	GetCategory(ctx context.Context, id string) (model.Category, *helper.AppError)
+	GetCategories(ctx context.Context) ([]model.Category, *helper.AppError)
+	UpdateCategory(ctx context.Context, category *model.Category) *helper.AppError
+	DeleteCategory(ctx context.Context, id string) *helper.AppError
 }
