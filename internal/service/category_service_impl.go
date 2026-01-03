@@ -18,7 +18,7 @@ func NewCategoryServiceImpl(repository domain.CategoryRepository) domain.Categor
 }
 
 func (c *categoryServiceImpl) CreateCategory(ctx context.Context, category *model.Category) *helper.AppError {
-	err := c.CreateCategory(ctx, category)
+	err := c.repository.Create(ctx, category)
 	if err != nil {
 		if errors.Is(err, domain.ErrCategoryAlreadyExists) {
 			return helper.NewAppError(

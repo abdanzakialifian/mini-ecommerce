@@ -46,8 +46,8 @@ func main() {
 	r.POST("/categories", categoryHandler.CreateCategory)
 	r.GET("/categories/:id", categoryHandler.GetCategory)
 	r.GET("/categories", categoryHandler.GetCategories)
-	r.PUT("/categories", productHandler.UpdateProduct)
-	r.DELETE("/categories/:id", productHandler.DeleteProduct)
+	r.PUT("/categories", categoryHandler.UpdateCategory)
+	r.DELETE("/categories/:id", categoryHandler.DeleteCategory)
 
 	if err := r.Run(":8080"); err != nil {
 		log.Fatalf("Server failed : %v", err)

@@ -38,8 +38,8 @@ func (h *CategoryHandler) CreateCategory(c *gin.Context) {
 	}
 
 	status, res := response.Success(
-		"Success Create Product",
-		category,
+		"Success Create Category",
+		ToCategoryResponse(category),
 	)
 	c.JSON(status, res)
 }
@@ -103,7 +103,7 @@ func (h *CategoryHandler) UpdateCategory(c *gin.Context) {
 
 	status, res := response.Success(
 		"Success Update Category",
-		category,
+		ToCategoryResponse(category),
 	)
 	c.JSON(status, res)
 }
