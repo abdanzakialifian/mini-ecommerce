@@ -72,25 +72,25 @@ func (c *categoryServiceImpl) GetCategories(ctx context.Context) ([]model.Catego
 	return categories, nil
 }
 
-func (c *categoryServiceImpl) UpdateCategory(ctx context.Context, category *model.Category) *helper.AppError {
-	err := c.repository.Update(ctx, category)
+func (c *categoryServiceImpl) UpdateCategory(ctx context.Context, category model.Category) (model.Category, *helper.AppError) {
+	category, err := c.repository.Update(ctx, category)
 	if err != nil {
 		if errors.Is(err, domain.ErrCategoryNotFound) {
-			return helper.NewAppError(
+			return model.Category{}, helper.NewAppError(
 				http.StatusNotFound,
 				"Product Not Found",
 				err,
 			)
 		}
 
-		return helper.NewAppError(
+		return model.Category{}, helper.NewAppError(
 			http.StatusInternalServerError,
 			"Internal Server Error",
 			err,
 		)
 	}
 
-	return nil
+	return category, nil
 }
 
 func (c *categoryServiceImpl) DeleteCategory(ctx context.Context, id string) *helper.AppError {

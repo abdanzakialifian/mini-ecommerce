@@ -95,7 +95,7 @@ func (h *CategoryHandler) UpdateCategory(c *gin.Context) {
 
 	category := ToCategoryFromUpdate(req)
 
-	appErr := h.service.UpdateCategory(c.Request.Context(), &category)
+	category, appErr := h.service.UpdateCategory(c.Request.Context(), category)
 	if appErr != nil {
 		c.Error(appErr)
 		return

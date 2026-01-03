@@ -21,10 +21,8 @@ func ToCategoryFromUpdate(req request.UpdateCategoryRequest) model.Category {
 
 func ToCategoryResponse(category model.Category) response.CategoryResponse {
 	return response.CategoryResponse{
-		ID:        category.ID,
-		Name:      category.Name,
-		CreatedAt: category.CreatedAt,
-		UpdatedAt: category.UpdatedAt,
+		ID:   category.ID,
+		Name: category.Name,
 	}
 }
 
@@ -32,10 +30,8 @@ func ToCategoryResponses(categories []model.Category) []response.CategoryRespons
 	var responses []response.CategoryResponse
 	for _, category := range categories {
 		response := response.CategoryResponse{
-			ID:        category.ID,
-			Name:      category.Name,
-			CreatedAt: category.CreatedAt,
-			UpdatedAt: category.UpdatedAt,
+			ID:   category.ID,
+			Name: category.Name,
 		}
 		responses = append(responses, response)
 	}

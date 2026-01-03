@@ -72,26 +72,26 @@ func (p productServiceImpl) GetProducts(ctx context.Context) ([]model.Product, *
 	return products, nil
 }
 
-func (p *productServiceImpl) UpdateProduct(ctx context.Context, product *model.UpdateProduct) *helper.AppError {
-	err := p.repository.Update(ctx, product)
+func (p *productServiceImpl) UpdateProduct(ctx context.Context, product model.Product) (model.Product, *helper.AppError) {
+	product, err := p.repository.Update(ctx, product)
 
 	if err != nil {
 		if errors.Is(err, domain.ErrProductNotFound) {
-			return helper.NewAppError(
+			return model.Product{}, helper.NewAppError(
 				http.StatusNotFound,
 				"Product Not Found",
 				err,
 			)
 		}
 
-		return helper.NewAppError(
+		return model.Product{}, helper.NewAppError(
 			http.StatusInternalServerError,
 			"Internal Server Error",
 			err,
 		)
 	}
 
-	return nil
+	return product, nil
 }
 
 func (p *productServiceImpl) DeleteProduct(ctx context.Context, id string) *helper.AppError {

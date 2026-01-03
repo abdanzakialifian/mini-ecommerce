@@ -20,7 +20,7 @@ func NewProductRepositoryImpl(db *pgxpool.Pool) domain.ProductRepository {
 }
 
 func (p *productRepositoryImpl) Create(ctx context.Context, product *model.Product) error {
-	query := "INSERT INTO products (category_id, name, description, price, stock) VALUES ($1, $2, $3, $4, $5) RETURNING id, created_at, updated_at"
+	query := "INSERT INTO products (category_id, name, description, price, stock) VALUES ($1, $2, $3, $4, $5) RETURNING id"
 	err := p.db.QueryRow(
 		ctx,
 		query,
@@ -29,7 +29,7 @@ func (p *productRepositoryImpl) Create(ctx context.Context, product *model.Produ
 		product.Description,
 		product.Price,
 		product.Stock,
-	).Scan(&product.ID, &product.CreatedAt, &product.UpdatedAt)
+	).Scan(&product.ID)
 
 	if err != nil {
 		var pgErr *pgconn.PgError
@@ -43,7 +43,7 @@ func (p *productRepositoryImpl) Create(ctx context.Context, product *model.Produ
 }
 
 func (p *productRepositoryImpl) Find(ctx context.Context, id string) (model.Product, error) {
-	query := "SELECT id, category_id, name, description, price, stock, created_at, updated_at FROM products WHERE id = $1"
+	query := "SELECT id, category_id, name, description, price, stock FROM products WHERE id = $1"
 	var product model.Product
 	err := p.db.QueryRow(
 		ctx,
@@ -56,8 +56,6 @@ func (p *productRepositoryImpl) Find(ctx context.Context, id string) (model.Prod
 		&product.Description,
 		&product.Price,
 		&product.Stock,
-		&product.CreatedAt,
-		&product.UpdatedAt,
 	)
 
 	if err != nil {
@@ -72,7 +70,7 @@ func (p *productRepositoryImpl) Find(ctx context.Context, id string) (model.Prod
 }
 
 func (p *productRepositoryImpl) FindAll(ctx context.Context) ([]model.Product, error) {
-	query := "SELECT id, category_id, name, description, price, stock, created_at, updated_at FROM products"
+	query := "SELECT id, category_id, name, description, price, stock FROM products"
 	rows, err := p.db.Query(ctx, query)
 	if err != nil {
 		return nil, err
@@ -90,8 +88,6 @@ func (p *productRepositoryImpl) FindAll(ctx context.Context) ([]model.Product, e
 			&product.Description,
 			&product.Price,
 			&product.Stock,
-			&product.CreatedAt,
-			&product.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -105,8 +101,9 @@ func (p *productRepositoryImpl) FindAll(ctx context.Context) ([]model.Product, e
 	return products, nil
 }
 
-func (p *productRepositoryImpl) Update(ctx context.Context, product *model.UpdateProduct) error {
-	query := "UPDATE products SET category_id = COALESCE($1, category_id), name = COALESCE($2, name), description = COALESCE($3, description), price = COALESCE($4, price), stock = COALESCE($5, stock), updated_at = NOW() WHERE id = $6 RETURNING updated_at"
+func (p *productRepositoryImpl) Update(ctx context.Context, product model.Product) (model.Product, error) {
+	query := "UPDATE products SET category_id = COALESCE($1, category_id), name = COALESCE($2, name), description = COALESCE($3, description), price = COALESCE($4, price), stock = COALESCE($5, stock), updated_at = NOW() WHERE id = $6 RETURNING id, category_id, name, description, price, stock"
+	updatedProduct := model.Product{}
 	err := p.db.QueryRow(
 		ctx,
 		query,
@@ -116,16 +113,23 @@ func (p *productRepositoryImpl) Update(ctx context.Context, product *model.Updat
 		product.Price,
 		product.Stock,
 		product.ID,
-	).Scan(&product.UpdatedAt)
+	).Scan(
+		&updatedProduct.ID,
+		&updatedProduct.CategoryID,
+		&updatedProduct.Name,
+		&updatedProduct.Description,
+		&updatedProduct.Price,
+		&updatedProduct.Stock,
+	)
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return domain.ErrProductNotFound
+			return model.Product{}, domain.ErrProductNotFound
 		}
-		return err
+		return model.Product{}, err
 	}
 
-	return nil
+	return updatedProduct, nil
 }
 
 func (p *productRepositoryImpl) Delete(ctx context.Context, id string) error {

@@ -20,12 +20,12 @@ func NewCategoryRepositoryImpl(db *pgxpool.Pool) domain.CategoryRepository {
 }
 
 func (c *categoryRepositoryImpl) Create(ctx context.Context, category *model.Category) error {
-	query := "INSERT INTO categories (name) VALUES ($1) RETURNING id, created_at, updated_at"
+	query := "INSERT INTO categories (name) VALUES ($1) RETURNING id"
 	err := c.db.QueryRow(
 		ctx,
 		query,
 		category.Name,
-	).Scan(&category.ID, &category.CreatedAt, &category.UpdatedAt)
+	).Scan(&category.ID)
 
 	if err != nil {
 		var pgErr *pgconn.PgError
@@ -39,7 +39,7 @@ func (c *categoryRepositoryImpl) Create(ctx context.Context, category *model.Cat
 }
 
 func (c *categoryRepositoryImpl) Find(ctx context.Context, id string) (model.Category, error) {
-	query := "SELECT id, name, created_at, updated_at FROM categories WHERE id = $1"
+	query := "SELECT id, name FROM categories WHERE id = $1"
 	var category model.Category
 	err := c.db.QueryRow(
 		ctx,
@@ -48,8 +48,6 @@ func (c *categoryRepositoryImpl) Find(ctx context.Context, id string) (model.Cat
 	).Scan(
 		&category.ID,
 		&category.Name,
-		&category.CreatedAt,
-		&category.UpdatedAt,
 	)
 
 	if err != nil {
@@ -63,7 +61,7 @@ func (c *categoryRepositoryImpl) Find(ctx context.Context, id string) (model.Cat
 }
 
 func (c *categoryRepositoryImpl) FindAll(ctx context.Context) ([]model.Category, error) {
-	query := "SELECT id, name, created_at, updated_at FROM categories"
+	query := "SELECT id, name FROM categories"
 	rows, err := c.db.Query(ctx, query)
 	if err != nil {
 		return nil, err
@@ -77,8 +75,6 @@ func (c *categoryRepositoryImpl) FindAll(ctx context.Context) ([]model.Category,
 		if err := rows.Scan(
 			&category.ID,
 			&category.Name,
-			&category.CreatedAt,
-			&category.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -92,25 +88,27 @@ func (c *categoryRepositoryImpl) FindAll(ctx context.Context) ([]model.Category,
 	return categories, nil
 }
 
-func (c *categoryRepositoryImpl) Update(ctx context.Context, category *model.Category) error {
-	query := "UPDATE categories SET name = $1, updated_at = NOW() WHERE id = $2 RETURNING updated_at"
+func (c *categoryRepositoryImpl) Update(ctx context.Context, category model.Category) (model.Category, error) {
+	query := "UPDATE categories SET name = $1, updated_at = NOW() WHERE id = $2 RETURNING id, name"
+	updatedCategory := model.Category{}
 	err := c.db.QueryRow(
 		ctx,
 		query,
 		category.Name,
 		category.ID,
 	).Scan(
-		&category.UpdatedAt,
+		&updatedCategory.ID,
+		&updatedCategory.Name,
 	)
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return domain.ErrCategoryNotFound
+			return model.Category{}, domain.ErrCategoryNotFound
 		}
-		return err
+		return model.Category{}, err
 	}
 
-	return nil
+	return updatedCategory, nil
 }
 
 func (c *categoryRepositoryImpl) Delete(ctx context.Context, id string) error {
