@@ -93,16 +93,15 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 		return
 	}
 
-	product := toProductFromUpdate(req)
-	product, err := h.service.UpdateProduct(c.Request.Context(), product)
-	if err != nil {
+	updateProduct := toProductFromUpdate(req)
+	if err := h.service.UpdateProduct(c.Request.Context(), &updateProduct); err != nil {
 		c.Error(err)
 		return
 	}
 
 	status, res := response.Success(
 		"Success Update Product",
-		toProductResponse(product),
+		toUpdateProductResponse(updateProduct),
 	)
 	c.JSON(status, res)
 }

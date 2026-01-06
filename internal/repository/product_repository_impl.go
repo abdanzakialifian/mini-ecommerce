@@ -101,35 +101,34 @@ func (p *productRepositoryImpl) FindAll(ctx context.Context) ([]model.Product, e
 	return products, nil
 }
 
-func (p *productRepositoryImpl) Update(ctx context.Context, product model.Product) (model.Product, error) {
+func (p *productRepositoryImpl) Update(ctx context.Context, updateProduct *model.UpdateProduct) error {
 	query := "UPDATE products SET category_id = COALESCE($1, category_id), name = COALESCE($2, name), description = COALESCE($3, description), price = COALESCE($4, price), stock = COALESCE($5, stock), updated_at = NOW() WHERE id = $6 RETURNING id, category_id, name, description, price, stock"
-	updatedProduct := model.Product{}
 	err := p.db.QueryRow(
 		ctx,
 		query,
-		product.CategoryID,
-		product.Name,
-		product.Description,
-		product.Price,
-		product.Stock,
-		product.ID,
+		updateProduct.CategoryID,
+		updateProduct.Name,
+		updateProduct.Description,
+		updateProduct.Price,
+		updateProduct.Stock,
+		updateProduct.ID,
 	).Scan(
-		&updatedProduct.ID,
-		&updatedProduct.CategoryID,
-		&updatedProduct.Name,
-		&updatedProduct.Description,
-		&updatedProduct.Price,
-		&updatedProduct.Stock,
+		&updateProduct.ID,
+		&updateProduct.CategoryID,
+		&updateProduct.Name,
+		&updateProduct.Description,
+		&updateProduct.Price,
+		&updateProduct.Stock,
 	)
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return model.Product{}, domain.ErrProductNotFound
+			return domain.ErrProductNotFound
 		}
-		return model.Product{}, err
+		return err
 	}
 
-	return updatedProduct, nil
+	return nil
 }
 
 func (p *productRepositoryImpl) Delete(ctx context.Context, id string) error {

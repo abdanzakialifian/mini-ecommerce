@@ -11,11 +11,11 @@ func toProductResponses(products []model.Product) []response.ProductResponse {
 	for _, product := range products {
 		response := response.ProductResponse{
 			ID:          product.ID,
-			CategoryID:  *product.CategoryID,
-			Name:        *product.Name,
-			Description: *product.Description,
-			Price:       *product.Price,
-			Stock:       *product.Stock,
+			CategoryID:  product.CategoryID,
+			Name:        product.Name,
+			Description: product.Description,
+			Price:       product.Price,
+			Stock:       product.Stock,
 		}
 		responses = append(responses, response)
 	}
@@ -25,26 +25,37 @@ func toProductResponses(products []model.Product) []response.ProductResponse {
 func toProductResponse(product model.Product) response.ProductResponse {
 	return response.ProductResponse{
 		ID:          product.ID,
-		CategoryID:  *product.CategoryID,
-		Name:        *product.Name,
-		Description: *product.Description,
-		Price:       *product.Price,
-		Stock:       *product.Stock,
+		CategoryID:  product.CategoryID,
+		Name:        product.Name,
+		Description: product.Description,
+		Price:       product.Price,
+		Stock:       product.Stock,
+	}
+}
+
+func toUpdateProductResponse(updateProduct model.UpdateProduct) response.ProductResponse {
+	return response.ProductResponse{
+		ID:          updateProduct.ID,
+		CategoryID:  *updateProduct.CategoryID,
+		Name:        *updateProduct.Name,
+		Description: *updateProduct.Description,
+		Price:       *updateProduct.Price,
+		Stock:       *updateProduct.Stock,
 	}
 }
 
 func toProductFromCreate(req request.CreateProductRequest) model.Product {
 	return model.Product{
-		CategoryID:  &req.CategoryID,
-		Name:        &req.Name,
-		Description: &req.Description,
-		Price:       &req.Price,
-		Stock:       &req.Stock,
+		CategoryID:  req.CategoryID,
+		Name:        req.Name,
+		Description: req.Description,
+		Price:       req.Price,
+		Stock:       req.Stock,
 	}
 }
 
-func toProductFromUpdate(req request.UpdateProductRequest) model.Product {
-	return model.Product{
+func toProductFromUpdate(req request.UpdateProductRequest) model.UpdateProduct {
+	return model.UpdateProduct{
 		ID:          req.ID,
 		CategoryID:  req.CategoryID,
 		Name:        req.Name,
