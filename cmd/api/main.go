@@ -29,6 +29,10 @@ func main() {
 	categoryService := service.NewCategoryServiceImpl(categoryRepository)
 	categoryHandler := handler.NewCategoryHandler(categoryService)
 
+	userRepository := repository.NewUserRepositoryImpl(db)
+	userService := service.NewUserServiceImpl(userRepository)
+	userHandler := handler.NewUserHandler(userService)
+
 	r := gin.New()
 
 	r.Use(
@@ -48,6 +52,11 @@ func main() {
 	r.GET("/categories", categoryHandler.GetCategories)
 	r.PUT("/categories", categoryHandler.UpdateCategory)
 	r.DELETE("/categories/:id", categoryHandler.DeleteCategory)
+
+	r.POST("/users", userHandler.CreateUser)
+	r.GET("/users/:id", userHandler.GetUser)
+	r.PUT("/users", userHandler.UpdateUser)
+	r.DELETE("/users/:id", userHandler.DeleteUser)
 
 	if err := r.Run(":8080"); err != nil {
 		log.Fatalf("Server failed : %v", err)

@@ -20,7 +20,7 @@ func NewUserServiceImpl(repository domain.UserRepository) domain.UserService {
 }
 
 func (u userServiceImpl) CreateUser(ctx context.Context, user *model.User) *helper.AppError {
-	hash, err := bcrypt.GenerateFromPassword([]byte(*user.Password), bcrypt.DefaultCost)
+	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 
 	if err != nil {
 		return helper.NewAppError(
@@ -30,8 +30,7 @@ func (u userServiceImpl) CreateUser(ctx context.Context, user *model.User) *help
 		)
 	}
 
-	hashed := string(hash)
-	user.Password = &hashed
+	user.Password = string(hash)
 
 	err = u.repository.Create(ctx, user)
 
@@ -75,25 +74,25 @@ func (u userServiceImpl) GetUser(ctx context.Context, id int) (model.User, *help
 	return user, nil
 }
 
-func (u userServiceImpl) UpdateUser(ctx context.Context, user model.User) (model.User, *helper.AppError) {
-	user, err := u.repository.Update(ctx, user)
+func (u userServiceImpl) UpdateUser(ctx context.Context, updateUser *model.UpdateUser) *helper.AppError {
+	err := u.repository.Update(ctx, updateUser)
 	if err != nil {
 		if errors.Is(err, domain.ErrUserNotFound) {
-			return model.User{}, helper.NewAppError(
+			return helper.NewAppError(
 				http.StatusNotFound,
 				"User Not Found",
 				err,
 			)
 		}
 
-		return model.User{}, helper.NewAppError(
+		return helper.NewAppError(
 			http.StatusInternalServerError,
 			"Internal Server Error",
 			err,
 		)
 	}
 
-	return user, nil
+	return nil
 }
 
 func (u userServiceImpl) DeleteUser(ctx context.Context, id int) *helper.AppError {

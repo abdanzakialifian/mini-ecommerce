@@ -63,30 +63,29 @@ func (u userRepositoryImpl) Find(ctx context.Context, id int) (model.User, error
 	return user, nil
 }
 
-func (u userRepositoryImpl) Update(ctx context.Context, user model.User) (model.User, error) {
+func (u userRepositoryImpl) Update(ctx context.Context, updateUser *model.UpdateUser) error {
 	query := "UPDATE users SET name = COALESCE($1, name), email = COALESCE($2, email), password = COALESCE($3, password) WHERE id = $4 RETURNING id, name, email"
-	var updatedUser model.User
 	err := u.db.QueryRow(
 		ctx,
 		query,
-		user.Name,
-		user.Email,
-		user.Password,
-		user.ID,
+		updateUser.Name,
+		updateUser.Email,
+		updateUser.Password,
+		updateUser.ID,
 	).Scan(
-		&updatedUser.ID,
-		&updatedUser.Name,
-		&updatedUser.Email,
+		&updateUser.ID,
+		&updateUser.Name,
+		&updateUser.Email,
 	)
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return model.User{}, domain.ErrUserNotFound
+			return domain.ErrUserNotFound
 		}
-		return model.User{}, err
+		return err
 	}
 
-	return updatedUser, nil
+	return nil
 }
 
 func (u userRepositoryImpl) Delete(ctx context.Context, id int) error {

@@ -30,7 +30,7 @@ func (h *CategoryHandler) CreateCategory(c *gin.Context) {
 		return
 	}
 
-	category := ToCategoryFromCreate(req)
+	category := toCategoryFromCreate(req)
 
 	if appErr := h.service.CreateCategory(c.Request.Context(), &category); appErr != nil {
 		c.Error(appErr)
@@ -39,7 +39,7 @@ func (h *CategoryHandler) CreateCategory(c *gin.Context) {
 
 	status, res := response.Success(
 		"Success Create Category",
-		ToCategoryResponse(category),
+		toCategoryResponse(category),
 	)
 	c.JSON(status, res)
 }
@@ -63,7 +63,7 @@ func (h *CategoryHandler) GetCategory(c *gin.Context) {
 
 	status, res := response.Success(
 		"Success Get Category",
-		ToCategoryResponse(category),
+		toCategoryResponse(category),
 	)
 	c.JSON(status, res)
 }
@@ -77,7 +77,7 @@ func (h *CategoryHandler) GetCategories(c *gin.Context) {
 
 	status, res := response.Success(
 		"Success Get Categories",
-		ToCategoryResponses(categories),
+		toCategoryResponses(categories),
 	)
 	c.JSON(status, res)
 }
@@ -93,7 +93,7 @@ func (h *CategoryHandler) UpdateCategory(c *gin.Context) {
 		return
 	}
 
-	category := ToCategoryFromUpdate(req)
+	category := toCategoryFromUpdate(req)
 
 	appErr := h.service.UpdateCategory(c.Request.Context(), &category)
 	if appErr != nil {
@@ -103,7 +103,7 @@ func (h *CategoryHandler) UpdateCategory(c *gin.Context) {
 
 	status, res := response.Success(
 		"Success Update Category",
-		ToCategoryResponse(category),
+		toCategoryResponse(category),
 	)
 	c.JSON(status, res)
 }

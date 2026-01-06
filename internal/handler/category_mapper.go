@@ -6,27 +6,27 @@ import (
 	"mini-ecommerce/internal/handler/response"
 )
 
-func ToCategoryFromCreate(req request.CreateCategoryRequest) model.Category {
+func toCategoryFromCreate(req request.CreateCategoryRequest) model.Category {
 	return model.Category{
 		Name: req.Name,
 	}
 }
 
-func ToCategoryFromUpdate(req request.UpdateCategoryRequest) model.Category {
+func toCategoryFromUpdate(req request.UpdateCategoryRequest) model.Category {
 	return model.Category{
 		ID:   req.ID,
 		Name: req.Name,
 	}
 }
 
-func ToCategoryResponse(category model.Category) response.CategoryResponse {
+func toCategoryResponse(category model.Category) response.CategoryResponse {
 	return response.CategoryResponse{
 		ID:   category.ID,
 		Name: category.Name,
 	}
 }
 
-func ToCategoryResponses(categories []model.Category) []response.CategoryResponse {
+func toCategoryResponses(categories []model.Category) []response.CategoryResponse {
 	var responses []response.CategoryResponse
 	for _, category := range categories {
 		response := response.CategoryResponse{
