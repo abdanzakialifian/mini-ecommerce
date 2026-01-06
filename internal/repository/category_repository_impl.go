@@ -88,27 +88,26 @@ func (c *categoryRepositoryImpl) FindAll(ctx context.Context) ([]model.Category,
 	return categories, nil
 }
 
-func (c *categoryRepositoryImpl) Update(ctx context.Context, category model.Category) (model.Category, error) {
+func (c *categoryRepositoryImpl) Update(ctx context.Context, category *model.Category) error {
 	query := "UPDATE categories SET name = $1, updated_at = NOW() WHERE id = $2 RETURNING id, name"
-	updatedCategory := model.Category{}
 	err := c.db.QueryRow(
 		ctx,
 		query,
 		category.Name,
 		category.ID,
 	).Scan(
-		&updatedCategory.ID,
-		&updatedCategory.Name,
+		&category.ID,
+		&category.Name,
 	)
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return model.Category{}, domain.ErrCategoryNotFound
+			return domain.ErrCategoryNotFound
 		}
-		return model.Category{}, err
+		return err
 	}
 
-	return updatedCategory, nil
+	return nil
 }
 
 func (c *categoryRepositoryImpl) Delete(ctx context.Context, id string) error {
