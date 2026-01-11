@@ -53,13 +53,13 @@ func (u userServiceImpl) CreateUser(ctx context.Context, user *model.User) *help
 	return nil
 }
 
-func (u userServiceImpl) GetUser(ctx context.Context, id int) (model.User, *helper.AppError) {
-	user, err := u.repository.Find(ctx, id)
+func (u userServiceImpl) GetUser(ctx context.Context, login model.LoginUser) (model.User, *helper.AppError) {
+	user, err := u.repository.Find(ctx, login)
 	if err != nil {
-		if errors.Is(err, domain.ErrUserNotFound) {
+		if errors.Is(err, domain.ErrUserInvalid) {
 			return model.User{}, helper.NewAppError(
-				http.StatusNotFound,
-				"User Not Found",
+				http.StatusBadRequest,
+				"Validation Failed",
 				err,
 			)
 		}

@@ -9,6 +9,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type userRepositoryImpl struct {
@@ -40,24 +41,29 @@ func (u userRepositoryImpl) Create(ctx context.Context, user *model.User) error 
 	return nil
 }
 
-func (u userRepositoryImpl) Find(ctx context.Context, id int) (model.User, error) {
-	query := "SELECT id, name, email FROM users WHERE id = $1"
+func (u userRepositoryImpl) Find(ctx context.Context, login model.LoginUser) (model.User, error) {
+	query := "SELECT id, name, email, password FROM users WHERE email = $1"
 	var user model.User
 	err := u.db.QueryRow(
 		ctx,
 		query,
-		id,
+		login.Email,
 	).Scan(
 		&user.ID,
 		&user.Name,
 		&user.Email,
+		&user.Password,
 	)
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return model.User{}, domain.ErrUserNotFound
+			return model.User{}, domain.ErrUserInvalid
 		}
 		return model.User{}, err
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(login.Password)); err != nil {
+		return model.User{}, domain.ErrUserInvalid
 	}
 
 	return user, nil

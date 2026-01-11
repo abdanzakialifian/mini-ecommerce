@@ -54,7 +54,7 @@ func main() {
 	r.DELETE("/categories/:id", categoryHandler.DeleteCategory)
 
 	r.POST("/users", userHandler.CreateUser)
-	r.GET("/users/:id", userHandler.GetUser)
+	r.GET("/users", userHandler.GetUser)
 	r.PUT("/users", userHandler.UpdateUser)
 	r.DELETE("/users/:id", userHandler.DeleteUser)
 

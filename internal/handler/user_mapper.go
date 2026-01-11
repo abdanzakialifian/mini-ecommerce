@@ -40,3 +40,18 @@ func toUpdateUserResponse(user model.UpdateUser) response.UserResponse {
 		Password: *user.Password,
 	}
 }
+
+func toLoginUser(req request.LoginUserRequest) model.LoginUser {
+	return model.LoginUser{
+		Email:    req.Email,
+		Password: req.Password,
+	}
+}
+
+func toLoginUserResponse(user model.User) response.LoginUserResponse {
+	return response.LoginUserResponse{
+		ID:    user.ID,
+		Name:  user.Name,
+		Email: user.Email,
+	}
+}

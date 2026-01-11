@@ -36,6 +36,7 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 
 	if appErr != nil {
 		c.Error(appErr)
+		return
 	}
 
 	status, res := response.Success(
@@ -46,27 +47,18 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 }
 
 func (h *UserHandler) GetUser(c *gin.Context) {
-	id := c.Param("id")
-	if id == "" {
+	var req request.LoginUserRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.Error(helper.NewAppError(
 			http.StatusBadRequest,
 			"Invalid Request Body",
-			errors.New("User id is required"),
+			err,
 		))
 		return
 	}
 
-	newId, err := strconv.Atoi(id)
-	if err != nil {
-		c.Error(helper.NewAppError(
-			http.StatusInternalServerError,
-			"Internal Server Error",
-			errors.New("Failed convert id"),
-		))
-		return
-	}
-
-	user, appErr := h.service.GetUser(c.Request.Context(), newId)
+	loginUser := toLoginUser(req)
+	user, appErr := h.service.GetUser(c.Request.Context(), loginUser)
 	if appErr != nil {
 		c.Error(appErr)
 		return
@@ -74,7 +66,7 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 
 	status, res := response.Success(
 		"Success Get User",
-		toUserResponse(user),
+		toLoginUserResponse(user),
 	)
 	c.JSON(status, res)
 }
