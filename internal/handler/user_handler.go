@@ -46,7 +46,7 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 	c.JSON(status, res)
 }
 
-func (h *UserHandler) GetUser(c *gin.Context) {
+func (h *UserHandler) GetUserByEmail(c *gin.Context) {
 	var req request.LoginUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.Error(helper.NewAppError(
@@ -58,7 +58,7 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 	}
 
 	loginUser := toLoginUser(req)
-	user, accessToken, appErr := h.service.GetUser(c.Request.Context(), loginUser)
+	user, accessToken, appErr := h.service.GetUserByEmail(c.Request.Context(), loginUser)
 	if appErr != nil {
 		c.Error(appErr)
 		return
@@ -72,6 +72,8 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 }
 
 func (h *UserHandler) UpdateUser(c *gin.Context) {
+	userId := c.MustGet("user_id").(int)
+
 	var req request.UpdateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.Error(helper.NewAppError(
@@ -82,7 +84,7 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	updateCategory := toUserFromUpdate(req)
+	updateCategory := toUserFromUpdate(req, userId)
 
 	appErr := h.service.UpdateUser(c.Request.Context(), &updateCategory)
 	if appErr != nil {

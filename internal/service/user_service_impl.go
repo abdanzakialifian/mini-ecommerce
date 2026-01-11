@@ -53,8 +53,8 @@ func (u userServiceImpl) CreateUser(ctx context.Context, user *model.User) *help
 	return nil
 }
 
-func (u userServiceImpl) GetUser(ctx context.Context, login model.LoginUser) (model.User, string, *helper.AppError) {
-	user, accessToken, err := u.repository.Find(ctx, login)
+func (u userServiceImpl) GetUserByEmail(ctx context.Context, login model.LoginUser) (model.User, string, *helper.AppError) {
+	user, accessToken, err := u.repository.FindByEmail(ctx, login)
 	if err != nil {
 		if errors.Is(err, domain.ErrUserInvalid) {
 			return model.User{}, "", helper.NewAppError(
@@ -75,6 +75,54 @@ func (u userServiceImpl) GetUser(ctx context.Context, login model.LoginUser) (mo
 }
 
 func (u userServiceImpl) UpdateUser(ctx context.Context, updateUser *model.UpdateUser) *helper.AppError {
+	if updateUser.OldPassword != nil || updateUser.NewPassword != nil {
+		if updateUser.OldPassword == nil || updateUser.NewPassword == nil {
+			return helper.NewAppError(
+				http.StatusBadRequest,
+				"Invalid Request",
+				errors.New("Both old password and new password are required"),
+			)
+		}
+
+		user, err := u.repository.FindById(ctx, updateUser.ID)
+		if err != nil {
+			if errors.Is(err, domain.ErrUserNotFound) {
+				return helper.NewAppError(
+					http.StatusNotFound,
+					"User Not Found",
+					err,
+				)
+			}
+
+			return helper.NewAppError(
+				http.StatusInternalServerError,
+				"Internal Server Error",
+				err,
+			)
+		}
+
+		if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(*updateUser.OldPassword)); err != nil {
+			return helper.NewAppError(
+				http.StatusBadRequest,
+				"Invalid Request",
+				errors.New("Old password is incorrect"),
+			)
+		}
+
+		hash, err := bcrypt.GenerateFromPassword([]byte(*updateUser.NewPassword), bcrypt.DefaultCost)
+
+		if err != nil {
+			return helper.NewAppError(
+				http.StatusInternalServerError,
+				"Internal Server Error",
+				err,
+			)
+		}
+
+		newPasswordHash := string(hash)
+		updateUser.NewPassword = &newPasswordHash
+	}
+
 	err := u.repository.Update(ctx, updateUser)
 	if err != nil {
 		if errors.Is(err, domain.ErrUserNotFound) {

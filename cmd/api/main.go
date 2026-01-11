@@ -48,7 +48,7 @@ func main() {
 	)
 
 	r.POST("/users", userHandler.CreateUser)
-	r.GET("/users", userHandler.GetUser)
+	r.GET("/users", userHandler.GetUserByEmail)
 
 	api := r.Group("/api")
 	api.Use(middleware.JWTAuth())

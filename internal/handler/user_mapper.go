@@ -14,30 +14,29 @@ func toUserFromCreate(req request.CreateUserRequest) model.User {
 	}
 }
 
-func toUserFromUpdate(req request.UpdateUserRequest) model.UpdateUser {
+func toUserFromUpdate(req request.UpdateUserRequest, userId int) model.UpdateUser {
 	return model.UpdateUser{
-		ID:       req.ID,
-		Name:     req.Name,
-		Email:    req.Email,
-		Password: req.Password,
+		ID:          userId,
+		Name:        req.Name,
+		Email:       req.Email,
+		OldPassword: req.OldPassword,
+		NewPassword: req.NewPassword,
 	}
 }
 
 func toUserResponse(user model.User) response.UserResponse {
 	return response.UserResponse{
-		ID:       user.ID,
-		Name:     user.Name,
-		Email:    user.Email,
-		Password: user.Password,
+		ID:    user.ID,
+		Name:  user.Name,
+		Email: user.Email,
 	}
 }
 
 func toUpdateUserResponse(user model.UpdateUser) response.UserResponse {
 	return response.UserResponse{
-		ID:       user.ID,
-		Name:     *user.Name,
-		Email:    *user.Email,
-		Password: *user.Password,
+		ID:    user.ID,
+		Name:  *user.Name,
+		Email: *user.Email,
 	}
 }
 
