@@ -53,25 +53,25 @@ func (u userServiceImpl) CreateUser(ctx context.Context, user *model.User) *help
 	return nil
 }
 
-func (u userServiceImpl) GetUser(ctx context.Context, login model.LoginUser) (model.User, *helper.AppError) {
-	user, err := u.repository.Find(ctx, login)
+func (u userServiceImpl) GetUser(ctx context.Context, login model.LoginUser) (model.User, string, *helper.AppError) {
+	user, accessToken, err := u.repository.Find(ctx, login)
 	if err != nil {
 		if errors.Is(err, domain.ErrUserInvalid) {
-			return model.User{}, helper.NewAppError(
+			return model.User{}, "", helper.NewAppError(
 				http.StatusBadRequest,
 				"Validation Failed",
 				err,
 			)
 		}
 
-		return model.User{}, helper.NewAppError(
+		return model.User{}, "", helper.NewAppError(
 			http.StatusInternalServerError,
 			"Internal Server Error",
 			err,
 		)
 	}
 
-	return user, nil
+	return user, accessToken, nil
 }
 
 func (u userServiceImpl) UpdateUser(ctx context.Context, updateUser *model.UpdateUser) *helper.AppError {

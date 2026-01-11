@@ -48,10 +48,11 @@ func toLoginUser(req request.LoginUserRequest) model.LoginUser {
 	}
 }
 
-func toLoginUserResponse(user model.User) response.LoginUserResponse {
+func toLoginUserResponse(user model.User, accessToken string) response.LoginUserResponse {
 	return response.LoginUserResponse{
-		ID:    user.ID,
-		Name:  user.Name,
-		Email: user.Email,
+		ID:          user.ID,
+		Name:        user.Name,
+		Email:       user.Email,
+		AccessToken: accessToken,
 	}
 }

@@ -58,7 +58,7 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 	}
 
 	loginUser := toLoginUser(req)
-	user, appErr := h.service.GetUser(c.Request.Context(), loginUser)
+	user, accessToken, appErr := h.service.GetUser(c.Request.Context(), loginUser)
 	if appErr != nil {
 		c.Error(appErr)
 		return
@@ -66,7 +66,7 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 
 	status, res := response.Success(
 		"Success Get User",
-		toLoginUserResponse(user),
+		toLoginUserResponse(user, accessToken),
 	)
 	c.JSON(status, res)
 }

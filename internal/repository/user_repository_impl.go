@@ -5,6 +5,7 @@ import (
 	"errors"
 	"mini-ecommerce/internal/domain"
 	"mini-ecommerce/internal/domain/model"
+	"mini-ecommerce/internal/helper"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -41,7 +42,7 @@ func (u userRepositoryImpl) Create(ctx context.Context, user *model.User) error 
 	return nil
 }
 
-func (u userRepositoryImpl) Find(ctx context.Context, login model.LoginUser) (model.User, error) {
+func (u userRepositoryImpl) Find(ctx context.Context, login model.LoginUser) (model.User, string, error) {
 	query := "SELECT id, name, email, password FROM users WHERE email = $1"
 	var user model.User
 	err := u.db.QueryRow(
@@ -57,16 +58,22 @@ func (u userRepositoryImpl) Find(ctx context.Context, login model.LoginUser) (mo
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return model.User{}, domain.ErrUserInvalid
+			return model.User{}, "", domain.ErrUserInvalid
 		}
-		return model.User{}, err
+		return model.User{}, "", err
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(login.Password)); err != nil {
-		return model.User{}, domain.ErrUserInvalid
+		return model.User{}, "", domain.ErrUserInvalid
 	}
 
-	return user, nil
+	accessToken, err := helper.GenerateAccessToken(user.ID, user.Name, user.Email)
+
+	if err != nil {
+		return model.User{}, "", err
+	}
+
+	return user, accessToken, nil
 }
 
 func (u userRepositoryImpl) Update(ctx context.Context, updateUser *model.UpdateUser) error {
