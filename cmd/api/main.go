@@ -47,22 +47,26 @@ func main() {
 		middleware.RequestID(),
 	)
 
-	r.POST("/products", productHandler.CreateProduct)
-	r.GET("/products/:id", productHandler.GetProduct)
-	r.GET("/products", productHandler.GetProducts)
-	r.PUT("/products", productHandler.UpdateProduct)
-	r.DELETE("/products/:id", productHandler.DeleteProduct)
-
-	r.POST("/categories", categoryHandler.CreateCategory)
-	r.GET("/categories/:id", categoryHandler.GetCategory)
-	r.GET("/categories", categoryHandler.GetCategories)
-	r.PUT("/categories", categoryHandler.UpdateCategory)
-	r.DELETE("/categories/:id", categoryHandler.DeleteCategory)
-
 	r.POST("/users", userHandler.CreateUser)
 	r.GET("/users", userHandler.GetUser)
-	r.PUT("/users", userHandler.UpdateUser)
-	r.DELETE("/users/:id", userHandler.DeleteUser)
+
+	api := r.Group("/api")
+	api.Use(middleware.JWTAuth())
+
+	api.POST("/products", middleware.JWTAuth(), productHandler.CreateProduct)
+	api.GET("/products/:id", middleware.JWTAuth(), productHandler.GetProduct)
+	api.GET("/products", middleware.JWTAuth(), productHandler.GetProducts)
+	api.PUT("/products", middleware.JWTAuth(), productHandler.UpdateProduct)
+	api.DELETE("/products/:id", middleware.JWTAuth(), productHandler.DeleteProduct)
+
+	api.POST("/categories", middleware.JWTAuth(), categoryHandler.CreateCategory)
+	api.GET("/categories/:id", middleware.JWTAuth(), categoryHandler.GetCategory)
+	api.GET("/categories", middleware.JWTAuth(), categoryHandler.GetCategories)
+	api.PUT("/categories", middleware.JWTAuth(), categoryHandler.UpdateCategory)
+	api.DELETE("/categories/:id", middleware.JWTAuth(), categoryHandler.DeleteCategory)
+
+	api.PUT("/users", middleware.JWTAuth(), userHandler.UpdateUser)
+	api.DELETE("/users/:id", middleware.JWTAuth(), userHandler.DeleteUser)
 
 	if err := r.Run(":8080"); err != nil {
 		log.Fatalf("Server failed : %v", err)
