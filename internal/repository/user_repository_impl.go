@@ -18,10 +18,10 @@ type userRepositoryImpl struct {
 }
 
 func NewUserRepositoryImpl(db *pgxpool.Pool) domain.UserRepository {
-	return userRepositoryImpl{db: db}
+	return &userRepositoryImpl{db: db}
 }
 
-func (u userRepositoryImpl) Create(ctx context.Context, user *model.User) error {
+func (u *userRepositoryImpl) Create(ctx context.Context, user *model.User) error {
 	query := "INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING id"
 	err := u.db.QueryRow(
 		ctx,
@@ -42,7 +42,7 @@ func (u userRepositoryImpl) Create(ctx context.Context, user *model.User) error 
 	return nil
 }
 
-func (u userRepositoryImpl) FindByEmail(ctx context.Context, login model.LoginUser) (model.User, string, error) {
+func (u *userRepositoryImpl) FindByEmail(ctx context.Context, login model.LoginUser) (model.User, string, error) {
 	query := "SELECT id, name, email, password FROM users WHERE email = $1"
 	var user model.User
 	err := u.db.QueryRow(
@@ -76,7 +76,7 @@ func (u userRepositoryImpl) FindByEmail(ctx context.Context, login model.LoginUs
 	return user, accessToken, nil
 }
 
-func (u userRepositoryImpl) FindById(ctx context.Context, id int) (model.User, error) {
+func (u *userRepositoryImpl) FindById(ctx context.Context, id int) (model.User, error) {
 	query := "SELECT id, name, email, password FROM users WHERE id = $1"
 	var user model.User
 	err := u.db.QueryRow(
@@ -100,7 +100,7 @@ func (u userRepositoryImpl) FindById(ctx context.Context, id int) (model.User, e
 	return user, nil
 }
 
-func (u userRepositoryImpl) Update(ctx context.Context, updateUser *model.UpdateUser) error {
+func (u *userRepositoryImpl) Update(ctx context.Context, updateUser *model.UpdateUser) error {
 	query := "UPDATE users SET name = COALESCE($1, name), email = COALESCE($2, email), password = COALESCE($3, password) WHERE id = $4 RETURNING id, name, email"
 	err := u.db.QueryRow(
 		ctx,
@@ -130,7 +130,7 @@ func (u userRepositoryImpl) Update(ctx context.Context, updateUser *model.Update
 	return nil
 }
 
-func (u userRepositoryImpl) Delete(ctx context.Context, id int) error {
+func (u *userRepositoryImpl) Delete(ctx context.Context, id int) error {
 	query := "DELETE FROM users WHERE id = $1"
 	cmd, err := u.db.Exec(ctx, query, id)
 	if err != nil {

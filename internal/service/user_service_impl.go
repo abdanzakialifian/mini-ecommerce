@@ -16,10 +16,10 @@ type userServiceImpl struct {
 }
 
 func NewUserServiceImpl(repository domain.UserRepository) domain.UserService {
-	return userServiceImpl{repository: repository}
+	return &userServiceImpl{repository: repository}
 }
 
-func (u userServiceImpl) CreateUser(ctx context.Context, user *model.User) *helper.AppError {
+func (u *userServiceImpl) CreateUser(ctx context.Context, user *model.User) *helper.AppError {
 	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 
 	if err != nil {
@@ -53,7 +53,7 @@ func (u userServiceImpl) CreateUser(ctx context.Context, user *model.User) *help
 	return nil
 }
 
-func (u userServiceImpl) GetUserByEmail(ctx context.Context, login model.LoginUser) (model.User, string, *helper.AppError) {
+func (u *userServiceImpl) GetUserByEmail(ctx context.Context, login model.LoginUser) (model.User, string, *helper.AppError) {
 	user, accessToken, err := u.repository.FindByEmail(ctx, login)
 	if err != nil {
 		if errors.Is(err, domain.ErrUserInvalid) {
@@ -74,7 +74,7 @@ func (u userServiceImpl) GetUserByEmail(ctx context.Context, login model.LoginUs
 	return user, accessToken, nil
 }
 
-func (u userServiceImpl) UpdateUser(ctx context.Context, updateUser *model.UpdateUser) *helper.AppError {
+func (u *userServiceImpl) UpdateUser(ctx context.Context, updateUser *model.UpdateUser) *helper.AppError {
 	if updateUser.OldPassword != nil || updateUser.NewPassword != nil {
 		if updateUser.OldPassword == nil || updateUser.NewPassword == nil {
 			return helper.NewAppError(
@@ -143,7 +143,7 @@ func (u userServiceImpl) UpdateUser(ctx context.Context, updateUser *model.Updat
 	return nil
 }
 
-func (u userServiceImpl) DeleteUser(ctx context.Context, id int) *helper.AppError {
+func (u *userServiceImpl) DeleteUser(ctx context.Context, id int) *helper.AppError {
 	err := u.repository.Delete(ctx, id)
 	if err != nil {
 		if errors.Is(err, domain.ErrUserNotFound) {
