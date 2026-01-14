@@ -1,13 +1,11 @@
 package handler
 
 import (
-	"errors"
 	"mini-ecommerce/internal/domain"
 	"mini-ecommerce/internal/handler/request"
 	"mini-ecommerce/internal/handler/response"
 	"mini-ecommerce/internal/helper"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -100,32 +98,14 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 }
 
 func (h *UserHandler) DeleteUser(c *gin.Context) {
-	id := c.Param("id")
-	if id == "" {
-		c.Error(helper.NewAppError(
-			http.StatusBadRequest,
-			"Invalid Request Body",
-			errors.New("User id is required"),
-		))
-		return
-	}
+	userId := c.MustGet("user_id").(int)
 
-	newId, err := strconv.Atoi(id)
-	if err != nil {
-		c.Error(helper.NewAppError(
-			http.StatusInternalServerError,
-			"Internal Server Error",
-			errors.New("Failed convert id"),
-		))
-		return
-	}
-
-	appErr := h.service.DeleteUser(c.Request.Context(), newId)
+	appErr := h.service.DeleteUser(c.Request.Context(), userId)
 	if appErr != nil {
 		c.Error(appErr)
 		return
 	}
 
-	status, res := response.SuccessNoContent("Success Update User")
+	status, res := response.SuccessNoContent("Success Delete User")
 	c.JSON(status, res)
 }

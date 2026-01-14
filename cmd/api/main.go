@@ -66,7 +66,7 @@ func main() {
 	api.DELETE("/categories/:id", middleware.JWTAuth(), categoryHandler.DeleteCategory)
 
 	api.PUT("/users", middleware.JWTAuth(), userHandler.UpdateUser)
-	api.DELETE("/users/:id", middleware.JWTAuth(), userHandler.DeleteUser)
+	api.DELETE("/users", middleware.JWTAuth(), userHandler.DeleteUser)
 
 	if err := r.Run(":8080"); err != nil {
 		log.Fatalf("Server failed : %v", err)
