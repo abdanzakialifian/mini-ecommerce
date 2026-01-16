@@ -9,3 +9,5 @@ var ErrCategoryNotFound = errors.New("Category with the given identifier was not
 var ErrUserAlreadyExists = errors.New("User with this email already exists")
 var ErrUserNotFound = errors.New("User not found")
 var ErrUserInvalid = errors.New("Invalid email or password")
+var ErrCartNotFound = errors.New("Cart not found")
+var ErrCartItemNotFound = errors.New("Cart Item not found")
