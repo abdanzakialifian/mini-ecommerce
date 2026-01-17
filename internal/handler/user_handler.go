@@ -2,6 +2,7 @@ package handler
 
 import (
 	"mini-ecommerce/internal/domain"
+	"mini-ecommerce/internal/domain/model"
 	"mini-ecommerce/internal/handler/request"
 	"mini-ecommerce/internal/handler/response"
 	"mini-ecommerce/internal/helper"
@@ -29,17 +30,26 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 		return
 	}
 
-	user := toUserFromCreate(req)
-	appErr := h.service.CreateUser(c.Request.Context(), &user)
+	user := model.User{
+		Name:     req.Name,
+		Email:    req.Email,
+		Password: req.Password,
+	}
 
-	if appErr != nil {
+	if appErr := h.service.CreateUser(c.Request.Context(), &user); appErr != nil {
 		c.Error(appErr)
 		return
 	}
 
+	dataResponse := response.UserResponse{
+		ID:    user.ID,
+		Name:  user.Name,
+		Email: user.Email,
+	}
+
 	status, res := response.Success(
 		"Success Create User",
-		toUserResponse(user),
+		dataResponse,
 	)
 	c.JSON(status, res)
 }
@@ -55,23 +65,33 @@ func (h *UserHandler) GetUserByEmail(c *gin.Context) {
 		return
 	}
 
-	loginUser := toLoginUser(req)
+	loginUser := model.LoginUser{
+		Email:    req.Email,
+		Password: req.Password,
+	}
+
 	user, accessToken, appErr := h.service.GetUserByEmail(c.Request.Context(), loginUser)
 	if appErr != nil {
 		c.Error(appErr)
 		return
 	}
 
+	dataResponse := response.LoginUserResponse{
+		ID:          user.ID,
+		Name:        user.Name,
+		Email:       user.Email,
+		AccessToken: accessToken,
+	}
+
 	status, res := response.Success(
 		"Success Get User",
-		toLoginUserResponse(user, accessToken),
+		dataResponse,
 	)
 	c.JSON(status, res)
 }
 
 func (h *UserHandler) UpdateUser(c *gin.Context) {
 	userId := c.MustGet("user_id").(int)
-
 	var req request.UpdateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.Error(helper.NewAppError(
@@ -82,17 +102,28 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	updateCategory := toUserFromUpdate(req, userId)
+	updateUser := model.UpdateUser{
+		ID:          userId,
+		Name:        req.Name,
+		Email:       req.Email,
+		OldPassword: req.OldPassword,
+		NewPassword: req.NewPassword,
+	}
 
-	appErr := h.service.UpdateUser(c.Request.Context(), &updateCategory)
-	if appErr != nil {
+	if appErr := h.service.UpdateUser(c.Request.Context(), &updateUser); appErr != nil {
 		c.Error(appErr)
 		return
 	}
 
+	dataResponse := response.UserResponse{
+		ID:    updateUser.ID,
+		Name:  *updateUser.Name,
+		Email: *updateUser.Email,
+	}
+
 	status, res := response.Success(
 		"Success Update User",
-		toUpdateUserResponse(updateCategory),
+		dataResponse,
 	)
 	c.JSON(status, res)
 }
@@ -100,8 +131,7 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 func (h *UserHandler) DeleteUser(c *gin.Context) {
 	userId := c.MustGet("user_id").(int)
 
-	appErr := h.service.DeleteUser(c.Request.Context(), userId)
-	if appErr != nil {
+	if appErr := h.service.DeleteUser(c.Request.Context(), userId); appErr != nil {
 		c.Error(appErr)
 		return
 	}

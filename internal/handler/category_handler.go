@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"mini-ecommerce/internal/domain"
+	"mini-ecommerce/internal/domain/model"
 	"mini-ecommerce/internal/handler/request"
 	"mini-ecommerce/internal/handler/response"
 	"mini-ecommerce/internal/helper"
@@ -30,16 +31,21 @@ func (h *CategoryHandler) CreateCategory(c *gin.Context) {
 		return
 	}
 
-	category := toCategoryFromCreate(req)
+	category := model.Category{Name: req.Name}
 
 	if appErr := h.service.CreateCategory(c.Request.Context(), &category); appErr != nil {
 		c.Error(appErr)
 		return
 	}
 
+	dataResponse := response.CategoryResponse{
+		ID:   category.ID,
+		Name: category.Name,
+	}
+
 	status, res := response.Success(
 		"Success Create Category",
-		toCategoryResponse(category),
+		dataResponse,
 	)
 	c.JSON(status, res)
 }
@@ -61,9 +67,14 @@ func (h *CategoryHandler) GetCategory(c *gin.Context) {
 		return
 	}
 
+	dataResponse := response.CategoryResponse{
+		ID:   category.ID,
+		Name: category.Name,
+	}
+
 	status, res := response.Success(
 		"Success Get Category",
-		toCategoryResponse(category),
+		dataResponse,
 	)
 	c.JSON(status, res)
 }
@@ -75,9 +86,18 @@ func (h *CategoryHandler) GetCategories(c *gin.Context) {
 		return
 	}
 
+	var dataResponses []response.CategoryResponse
+	for _, category := range categories {
+		response := response.CategoryResponse{
+			ID:   category.ID,
+			Name: category.Name,
+		}
+		dataResponses = append(dataResponses, response)
+	}
+
 	status, res := response.Success(
 		"Success Get Categories",
-		toCategoryResponses(categories),
+		dataResponses,
 	)
 	c.JSON(status, res)
 }
@@ -93,24 +113,30 @@ func (h *CategoryHandler) UpdateCategory(c *gin.Context) {
 		return
 	}
 
-	category := toCategoryFromUpdate(req)
+	updateCategory := model.UpdateCategory{
+		ID:   req.ID,
+		Name: req.Name,
+	}
 
-	appErr := h.service.UpdateCategory(c.Request.Context(), &category)
-	if appErr != nil {
+	if appErr := h.service.UpdateCategory(c.Request.Context(), &updateCategory); appErr != nil {
 		c.Error(appErr)
 		return
 	}
 
+	dataResponse := response.CategoryResponse{
+		ID:   updateCategory.ID,
+		Name: updateCategory.Name,
+	}
+
 	status, res := response.Success(
 		"Success Update Category",
-		toCategoryResponse(category),
+		dataResponse,
 	)
 	c.JSON(status, res)
 }
 
 func (h *CategoryHandler) DeleteCategory(c *gin.Context) {
 	id := c.Param("id")
-
 	if id == "" {
 		c.Error(helper.NewAppError(
 			http.StatusBadRequest,
@@ -120,10 +146,8 @@ func (h *CategoryHandler) DeleteCategory(c *gin.Context) {
 		return
 	}
 
-	err := h.service.DeleteCategory(c.Request.Context(), id)
-
-	if err != nil {
-		c.Error(err)
+	if appErr := h.service.DeleteCategory(c.Request.Context(), id); appErr != nil {
+		c.Error(appErr)
 		return
 	}
 

@@ -66,11 +66,19 @@ func (c *cartServiceImpl) AddCartItemToCart(ctx context.Context, userId int, pro
 
 		if cartItem != nil {
 			cartItem.Quantity += quantity
-			err := c.cartItemRepository.Update(ctx, cartItem.ID, cartItem.Quantity)
+
+			updateCartItem := model.UpdateCartItem{
+				ID:       cartItem.ID,
+				Quantity: cartItem.Quantity,
+			}
+
+			err := c.cartItemRepository.Update(ctx, updateCartItem)
 			if err != nil {
 				return err
 			}
+
 			cartItemModel = cartItem
+
 			return nil
 		}
 
@@ -106,9 +114,9 @@ func (c *cartServiceImpl) AddCartItemToCart(ctx context.Context, userId int, pro
 	return *cartItemModel, nil
 }
 
-func (c *cartServiceImpl) UpdateCartItemQuantity(ctx context.Context, userId int, cartItemId int, quantity int) *helper.AppError {
+func (c *cartServiceImpl) UpdateCartItemQuantity(ctx context.Context, userId int, updateCartItem model.UpdateCartItem) *helper.AppError {
 	err := func() error {
-		cartItem, err := c.cartItemRepository.FindById(ctx, cartItemId)
+		cartItem, err := c.cartItemRepository.FindById(ctx, updateCartItem.ID)
 		if err != nil {
 			return err
 		}
@@ -122,8 +130,8 @@ func (c *cartServiceImpl) UpdateCartItemQuantity(ctx context.Context, userId int
 			return domain.ErrCartItemNotFound
 		}
 
-		cartItem.Quantity += quantity
-		err = c.cartItemRepository.Update(ctx, cartItemId, cartItem.Quantity)
+		updateCartItem.Quantity += cartItem.Quantity
+		err = c.cartItemRepository.Update(ctx, updateCartItem)
 		if err != nil {
 			return err
 		}

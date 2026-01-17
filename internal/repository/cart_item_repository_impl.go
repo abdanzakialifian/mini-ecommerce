@@ -82,10 +82,10 @@ func (c *cartItemRepositoryImpl) FindByCartAndProductId(ctx context.Context, car
 	return cartItem, nil
 }
 
-func (c *cartItemRepositoryImpl) Update(ctx context.Context, id int, quantity int) error {
+func (c *cartItemRepositoryImpl) Update(ctx context.Context, updateCartItem model.UpdateCartItem) error {
 	db := c.tx.GetTx(ctx)
 	query := "UPDATE cart_items SET quantity = $1 WHERE id = $2"
-	cmd, err := db.Exec(ctx, query, quantity, id)
+	cmd, err := db.Exec(ctx, query, updateCartItem.Quantity, updateCartItem.ID)
 	if err != nil {
 		return err
 	}

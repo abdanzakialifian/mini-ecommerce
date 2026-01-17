@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"mini-ecommerce/internal/domain"
+	"mini-ecommerce/internal/domain/model"
 	"mini-ecommerce/internal/handler/request"
 	"mini-ecommerce/internal/handler/response"
 	"mini-ecommerce/internal/helper"
@@ -30,22 +31,37 @@ func (h *ProductHandler) CreateProduct(c *gin.Context) {
 		return
 	}
 
-	product := toProductFromCreate(req)
-	if err := h.service.CreateProduct(c.Request.Context(), &product); err != nil {
-		c.Error(err)
+	product := model.Product{
+		CategoryID:  req.CategoryID,
+		Name:        req.Name,
+		Description: req.Description,
+		Price:       req.Price,
+		Stock:       req.Stock,
+	}
+
+	if appErr := h.service.CreateProduct(c.Request.Context(), &product); appErr != nil {
+		c.Error(appErr)
 		return
+	}
+
+	dataResponse := response.ProductResponse{
+		ID:          product.ID,
+		CategoryID:  product.CategoryID,
+		Name:        product.Name,
+		Description: product.Description,
+		Price:       product.Price,
+		Stock:       product.Stock,
 	}
 
 	status, res := response.Success(
 		"Success Create Product",
-		toProductResponse(product),
+		dataResponse,
 	)
 	c.JSON(status, res)
 }
 
 func (h *ProductHandler) GetProduct(c *gin.Context) {
 	id := c.Param("id")
-
 	if id == "" {
 		c.Error(helper.NewAppError(
 			http.StatusBadRequest,
@@ -55,15 +71,24 @@ func (h *ProductHandler) GetProduct(c *gin.Context) {
 		return
 	}
 
-	product, err := h.service.GetProduct(c.Request.Context(), id)
-	if err != nil {
-		c.Error(err)
+	product, appErr := h.service.GetProduct(c.Request.Context(), id)
+	if appErr != nil {
+		c.Error(appErr)
 		return
+	}
+
+	dataResponse := response.ProductResponse{
+		ID:          product.ID,
+		CategoryID:  product.CategoryID,
+		Name:        product.Name,
+		Description: product.Description,
+		Price:       product.Price,
+		Stock:       product.Stock,
 	}
 
 	status, res := response.Success(
 		"Success Get Product",
-		toProductResponse(product),
+		dataResponse,
 	)
 	c.JSON(status, res)
 }
@@ -75,9 +100,22 @@ func (h *ProductHandler) GetProducts(c *gin.Context) {
 		return
 	}
 
+	var dataResponses []response.ProductResponse
+	for _, product := range products {
+		response := response.ProductResponse{
+			ID:          product.ID,
+			CategoryID:  product.CategoryID,
+			Name:        product.Name,
+			Description: product.Description,
+			Price:       product.Price,
+			Stock:       product.Stock,
+		}
+		dataResponses = append(dataResponses, response)
+	}
+
 	status, res := response.Success(
 		"Success Get Products",
-		toProductResponses(products),
+		dataResponses,
 	)
 	c.JSON(status, res)
 }
@@ -93,22 +131,38 @@ func (h *ProductHandler) UpdateProduct(c *gin.Context) {
 		return
 	}
 
-	updateProduct := toProductFromUpdate(req)
-	if err := h.service.UpdateProduct(c.Request.Context(), &updateProduct); err != nil {
-		c.Error(err)
+	updateProduct := model.UpdateProduct{
+		ID:          req.ID,
+		CategoryID:  req.CategoryID,
+		Name:        req.Name,
+		Description: req.Description,
+		Price:       req.Price,
+		Stock:       req.Stock,
+	}
+
+	if appErr := h.service.UpdateProduct(c.Request.Context(), &updateProduct); appErr != nil {
+		c.Error(appErr)
 		return
+	}
+
+	dataResponse := response.ProductResponse{
+		ID:          updateProduct.ID,
+		CategoryID:  *updateProduct.CategoryID,
+		Name:        *updateProduct.Name,
+		Description: *updateProduct.Description,
+		Price:       *updateProduct.Price,
+		Stock:       *updateProduct.Stock,
 	}
 
 	status, res := response.Success(
 		"Success Update Product",
-		toUpdateProductResponse(updateProduct),
+		dataResponse,
 	)
 	c.JSON(status, res)
 }
 
 func (h *ProductHandler) DeleteProduct(c *gin.Context) {
 	id := c.Param("id")
-
 	if id == "" {
 		c.Error(helper.NewAppError(
 			http.StatusBadRequest,
@@ -118,9 +172,8 @@ func (h *ProductHandler) DeleteProduct(c *gin.Context) {
 		return
 	}
 
-	err := h.service.DeleteProduct(c.Request.Context(), id)
-	if err != nil {
-		c.Error(err)
+	if appErr := h.service.DeleteProduct(c.Request.Context(), id); appErr != nil {
+		c.Error(appErr)
 		return
 	}
 

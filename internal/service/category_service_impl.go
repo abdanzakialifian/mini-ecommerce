@@ -72,8 +72,8 @@ func (c *categoryServiceImpl) GetCategories(ctx context.Context) ([]model.Catego
 	return categories, nil
 }
 
-func (c *categoryServiceImpl) UpdateCategory(ctx context.Context, category *model.Category) *helper.AppError {
-	err := c.repository.Update(ctx, category)
+func (c *categoryServiceImpl) UpdateCategory(ctx context.Context, updateCategory *model.UpdateCategory) *helper.AppError {
+	err := c.repository.Update(ctx, updateCategory)
 	if err != nil {
 		if errors.Is(err, domain.ErrCategoryNotFound) {
 			return helper.NewAppError(
