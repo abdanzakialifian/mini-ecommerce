@@ -92,6 +92,7 @@ func (h *UserHandler) GetUserByEmail(c *gin.Context) {
 
 func (h *UserHandler) UpdateUser(c *gin.Context) {
 	userId := c.MustGet("user_id").(int)
+
 	var req request.UpdateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.Error(helper.NewAppError(
