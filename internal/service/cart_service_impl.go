@@ -38,11 +38,7 @@ func (c *cartServiceImpl) GetCartItems(ctx context.Context, userId int) ([]model
 
 	if err != nil {
 		if errors.Is(err, domain.ErrCartNotFound) {
-			return nil, helper.NewAppError(
-				http.StatusNotFound,
-				"Cart Not Found",
-				err,
-			)
+			return nil, nil
 		}
 		return nil, helper.NewAppError(
 			http.StatusInternalServerError,
@@ -69,8 +65,8 @@ func (c *cartServiceImpl) AddCartItemToCart(ctx context.Context, userId int, pro
 		}
 
 		if cartItem != nil {
-			newQuantity := cartItem.Quantity + quantity
-			err := c.cartItemRepository.Update(ctx, cartItem.ID, newQuantity)
+			cartItem.Quantity += quantity
+			err := c.cartItemRepository.Update(ctx, cartItem.ID, cartItem.Quantity)
 			if err != nil {
 				return err
 			}
@@ -78,15 +74,16 @@ func (c *cartServiceImpl) AddCartItemToCart(ctx context.Context, userId int, pro
 			return nil
 		}
 
-		cartItem = &model.CartItem{
+		cartItemModel = &model.CartItem{
 			CartID:    cart.ID,
 			ProductID: productId,
 			Quantity:  quantity,
 		}
-		err = c.cartItemRepository.Create(ctx, cartItem)
+		err = c.cartItemRepository.Create(ctx, cartItemModel)
 		if err != nil {
 			return err
 		}
+
 		return nil
 	})
 
@@ -125,7 +122,8 @@ func (c *cartServiceImpl) UpdateCartItemQuantity(ctx context.Context, userId int
 			return domain.ErrCartItemNotFound
 		}
 
-		err = c.cartItemRepository.Update(ctx, cartItemId, quantity)
+		cartItem.Quantity += quantity
+		err = c.cartItemRepository.Update(ctx, cartItemId, cartItem.Quantity)
 		if err != nil {
 			return err
 		}

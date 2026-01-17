@@ -5,6 +5,7 @@ import (
 	"log"
 	"mini-ecommerce/internal/database"
 	"mini-ecommerce/internal/handler"
+	"mini-ecommerce/internal/helper"
 	"mini-ecommerce/internal/middleware"
 	"mini-ecommerce/internal/repository"
 	"mini-ecommerce/internal/service"
@@ -27,6 +28,8 @@ func main() {
 	}
 	defer db.Close()
 
+	tx := helper.NewTransaction(db)
+
 	productRepository := repository.NewProductRepositoryImpl(db)
 	productService := service.NewProductServiceImpl(productRepository)
 	productHandler := handler.NewProductHandler(productService)
@@ -39,6 +42,11 @@ func main() {
 	userService := service.NewUserServiceImpl(userRepository)
 	userHandler := handler.NewUserHandler(userService)
 
+	cartRepository := repository.NewCartRepositoryImpl(tx)
+	cartItemRepository := repository.NewCartItemRepositoryImpl(tx)
+	cartService := service.NewCartServiceImpl(tx, cartRepository, cartItemRepository)
+	cartHandler := handler.NewCartHandler(cartService)
+
 	r := gin.New()
 
 	r.Use(
@@ -47,26 +55,33 @@ func main() {
 		middleware.RequestID(),
 	)
 
+	// ======================== without token ========================
 	r.POST("/users", userHandler.CreateUser)
 	r.GET("/users", userHandler.GetUserByEmail)
 
+	// ======================== with token ========================
 	api := r.Group("/api")
 	api.Use(middleware.JWTAuth())
 
-	api.POST("/products", middleware.JWTAuth(), productHandler.CreateProduct)
-	api.GET("/products/:id", middleware.JWTAuth(), productHandler.GetProduct)
-	api.GET("/products", middleware.JWTAuth(), productHandler.GetProducts)
-	api.PUT("/products", middleware.JWTAuth(), productHandler.UpdateProduct)
-	api.DELETE("/products/:id", middleware.JWTAuth(), productHandler.DeleteProduct)
+	api.POST("/products", productHandler.CreateProduct)
+	api.GET("/products/:id", productHandler.GetProduct)
+	api.GET("/products", productHandler.GetProducts)
+	api.PUT("/products", productHandler.UpdateProduct)
+	api.DELETE("/products/:id", productHandler.DeleteProduct)
 
-	api.POST("/categories", middleware.JWTAuth(), categoryHandler.CreateCategory)
-	api.GET("/categories/:id", middleware.JWTAuth(), categoryHandler.GetCategory)
-	api.GET("/categories", middleware.JWTAuth(), categoryHandler.GetCategories)
-	api.PUT("/categories", middleware.JWTAuth(), categoryHandler.UpdateCategory)
-	api.DELETE("/categories/:id", middleware.JWTAuth(), categoryHandler.DeleteCategory)
+	api.POST("/categories", categoryHandler.CreateCategory)
+	api.GET("/categories/:id", categoryHandler.GetCategory)
+	api.GET("/categories", categoryHandler.GetCategories)
+	api.PUT("/categories", categoryHandler.UpdateCategory)
+	api.DELETE("/categories/:id", categoryHandler.DeleteCategory)
 
-	api.PUT("/users", middleware.JWTAuth(), userHandler.UpdateUser)
-	api.DELETE("/users", middleware.JWTAuth(), userHandler.DeleteUser)
+	api.PUT("/users", userHandler.UpdateUser)
+	api.DELETE("/users", userHandler.DeleteUser)
+
+	api.POST("/carts", cartHandler.AddCartItemToCart)
+	api.GET("/carts", cartHandler.GetCartItems)
+	api.PUT("/carts", cartHandler.UpdateCartItemQuantity)
+	api.DELETE("/carts/:cart_item_id", cartHandler.DeleteCartItemFromCart)
 
 	if err := r.Run(":8080"); err != nil {
 		log.Fatalf("Server failed : %v", err)
