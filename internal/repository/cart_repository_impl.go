@@ -3,8 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
-	"mini-ecommerce/internal/domain"
-	"mini-ecommerce/internal/domain/model"
+	"mini-ecommerce/internal/domain/cart"
 	"mini-ecommerce/internal/helper"
 
 	"github.com/jackc/pgx/v5"
@@ -14,34 +13,34 @@ type cartRepositoryImpl struct {
 	tx *helper.Transaction
 }
 
-func NewCartRepositoryImpl(tx *helper.Transaction) domain.CartRepository {
+func NewCartRepositoryImpl(tx *helper.Transaction) cart.CartRepository {
 	return &cartRepositoryImpl{tx: tx}
 }
 
-func (c *cartRepositoryImpl) FindByUserId(ctx context.Context, userId int) (model.Cart, error) {
+func (c *cartRepositoryImpl) FindByUserId(ctx context.Context, userId int) (cart.Cart, error) {
 	db := c.tx.GetTx(ctx)
 	query := "SELECT id, user_id FROM carts WHERE user_id = $1"
-	var cart model.Cart
-	err := db.QueryRow(ctx, query, userId).Scan(&cart.ID, &cart.UserID)
+	var result cart.Cart
+	err := db.QueryRow(ctx, query, userId).Scan(&result.ID, &result.UserID)
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return model.Cart{}, domain.ErrCartNotFound
+			return cart.Cart{}, helper.ErrCartNotFound
 		}
-		return model.Cart{}, err
+		return cart.Cart{}, err
 	}
 
-	return cart, nil
+	return result, nil
 }
 
-func (c *cartRepositoryImpl) FindOrCreateByUserId(ctx context.Context, userId int) (model.Cart, error) {
+func (c *cartRepositoryImpl) FindOrCreateByUserId(ctx context.Context, userId int) (cart.Cart, error) {
 	db := c.tx.GetTx(ctx)
 	query := "INSERT INTO carts (user_id) VALUES ($1) ON CONFLICT (user_id) DO UPDATE SET user_id = EXCLUDED.user_id RETURNING id, user_id"
-	var cart model.Cart
-	err := db.QueryRow(ctx, query, userId).Scan(&cart.ID, &cart.UserID)
+	var result cart.Cart
+	err := db.QueryRow(ctx, query, userId).Scan(&result.ID, &result.UserID)
 	if err != nil {
-		return model.Cart{}, err
+		return cart.Cart{}, err
 	}
 
-	return cart, nil
+	return result, nil
 }

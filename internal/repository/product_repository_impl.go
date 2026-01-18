@@ -3,8 +3,8 @@ package repository
 import (
 	"context"
 	"errors"
-	"mini-ecommerce/internal/domain"
-	"mini-ecommerce/internal/domain/model"
+	"mini-ecommerce/internal/domain/product"
+	"mini-ecommerce/internal/helper"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -15,11 +15,11 @@ type productRepositoryImpl struct {
 	db *pgxpool.Pool
 }
 
-func NewProductRepositoryImpl(db *pgxpool.Pool) domain.ProductRepository {
+func NewProductRepositoryImpl(db *pgxpool.Pool) product.ProductRepository {
 	return &productRepositoryImpl{db: db}
 }
 
-func (p *productRepositoryImpl) Create(ctx context.Context, product *model.Product) error {
+func (p *productRepositoryImpl) Create(ctx context.Context, product *product.Product) error {
 	query := "INSERT INTO products (category_id, name, description, price, stock) VALUES ($1, $2, $3, $4, $5) RETURNING id"
 	err := p.db.QueryRow(
 		ctx,
@@ -34,7 +34,7 @@ func (p *productRepositoryImpl) Create(ctx context.Context, product *model.Produ
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
-			return domain.ErrProductAlreadyExists
+			return helper.ErrProductAlreadyExists
 		}
 		return err
 	}
@@ -42,34 +42,34 @@ func (p *productRepositoryImpl) Create(ctx context.Context, product *model.Produ
 	return nil
 }
 
-func (p *productRepositoryImpl) Find(ctx context.Context, id string) (model.Product, error) {
+func (p *productRepositoryImpl) Find(ctx context.Context, id string) (product.Product, error) {
 	query := "SELECT id, category_id, name, description, price, stock FROM products WHERE id = $1"
-	var product model.Product
+	var result product.Product
 	err := p.db.QueryRow(
 		ctx,
 		query,
 		id,
 	).Scan(
-		&product.ID,
-		&product.CategoryID,
-		&product.Name,
-		&product.Description,
-		&product.Price,
-		&product.Stock,
+		&result.ID,
+		&result.CategoryID,
+		&result.Name,
+		&result.Description,
+		&result.Price,
+		&result.Stock,
 	)
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return model.Product{}, domain.ErrProductNotFound
+			return product.Product{}, helper.ErrProductNotFound
 		}
 
-		return model.Product{}, err
+		return product.Product{}, err
 	}
 
-	return product, nil
+	return result, nil
 }
 
-func (p *productRepositoryImpl) FindAll(ctx context.Context) ([]model.Product, error) {
+func (p *productRepositoryImpl) FindAll(ctx context.Context) ([]product.Product, error) {
 	query := "SELECT id, category_id, name, description, price, stock FROM products"
 	rows, err := p.db.Query(ctx, query)
 	if err != nil {
@@ -77,10 +77,10 @@ func (p *productRepositoryImpl) FindAll(ctx context.Context) ([]model.Product, e
 	}
 	defer rows.Close()
 
-	var products []model.Product
+	var results []product.Product
 
 	for rows.Next() {
-		var product model.Product
+		var product product.Product
 		if err := rows.Scan(
 			&product.ID,
 			&product.CategoryID,
@@ -91,17 +91,17 @@ func (p *productRepositoryImpl) FindAll(ctx context.Context) ([]model.Product, e
 		); err != nil {
 			return nil, err
 		}
-		products = append(products, product)
+		results = append(results, product)
 	}
 
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 
-	return products, nil
+	return results, nil
 }
 
-func (p *productRepositoryImpl) Update(ctx context.Context, updateProduct *model.UpdateProduct) error {
+func (p *productRepositoryImpl) Update(ctx context.Context, updateProduct *product.UpdateProduct) error {
 	query := "UPDATE products SET category_id = COALESCE($1, category_id), name = COALESCE($2, name), description = COALESCE($3, description), price = COALESCE($4, price), stock = COALESCE($5, stock), updated_at = NOW() WHERE id = $6 RETURNING id, category_id, name, description, price, stock"
 	err := p.db.QueryRow(
 		ctx,
@@ -123,7 +123,7 @@ func (p *productRepositoryImpl) Update(ctx context.Context, updateProduct *model
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return domain.ErrProductNotFound
+			return helper.ErrProductNotFound
 		}
 		return err
 	}
@@ -139,7 +139,7 @@ func (p *productRepositoryImpl) Delete(ctx context.Context, id string) error {
 	}
 
 	if cmd.RowsAffected() == 0 {
-		return domain.ErrProductNotFound
+		return helper.ErrProductNotFound
 	}
 
 	return nil

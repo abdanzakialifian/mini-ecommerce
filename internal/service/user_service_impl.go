@@ -3,8 +3,7 @@ package service
 import (
 	"context"
 	"errors"
-	"mini-ecommerce/internal/domain"
-	"mini-ecommerce/internal/domain/model"
+	"mini-ecommerce/internal/domain/user"
 	"mini-ecommerce/internal/helper"
 	"net/http"
 
@@ -12,14 +11,14 @@ import (
 )
 
 type userServiceImpl struct {
-	repository domain.UserRepository
+	repository user.UserRepository
 }
 
-func NewUserServiceImpl(repository domain.UserRepository) domain.UserService {
+func NewUserServiceImpl(repository user.UserRepository) user.UserService {
 	return &userServiceImpl{repository: repository}
 }
 
-func (u *userServiceImpl) CreateUser(ctx context.Context, user *model.User) *helper.AppError {
+func (u *userServiceImpl) CreateUser(ctx context.Context, user *user.User) *helper.AppError {
 	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 
 	if err != nil {
@@ -35,7 +34,7 @@ func (u *userServiceImpl) CreateUser(ctx context.Context, user *model.User) *hel
 	err = u.repository.Create(ctx, user)
 
 	if err != nil {
-		if errors.Is(err, domain.ErrUserAlreadyExists) {
+		if errors.Is(err, helper.ErrUserAlreadyExists) {
 			return helper.NewAppError(
 				http.StatusConflict,
 				"User Already Exists",
@@ -53,28 +52,28 @@ func (u *userServiceImpl) CreateUser(ctx context.Context, user *model.User) *hel
 	return nil
 }
 
-func (u *userServiceImpl) GetUserByEmail(ctx context.Context, login model.LoginUser) (model.User, string, *helper.AppError) {
-	user, accessToken, err := u.repository.FindByEmail(ctx, login)
+func (u *userServiceImpl) GetUserByEmail(ctx context.Context, login user.LoginUser) (user.User, string, *helper.AppError) {
+	result, accessToken, err := u.repository.FindByEmail(ctx, login)
 	if err != nil {
-		if errors.Is(err, domain.ErrUserInvalid) {
-			return model.User{}, "", helper.NewAppError(
+		if errors.Is(err, helper.ErrUserInvalid) {
+			return user.User{}, "", helper.NewAppError(
 				http.StatusBadRequest,
 				"Validation Failed",
 				err,
 			)
 		}
 
-		return model.User{}, "", helper.NewAppError(
+		return user.User{}, "", helper.NewAppError(
 			http.StatusInternalServerError,
 			"Internal Server Error",
 			err,
 		)
 	}
 
-	return user, accessToken, nil
+	return result, accessToken, nil
 }
 
-func (u *userServiceImpl) UpdateUser(ctx context.Context, updateUser *model.UpdateUser) *helper.AppError {
+func (u *userServiceImpl) UpdateUser(ctx context.Context, updateUser *user.UpdateUser) *helper.AppError {
 	if updateUser.OldPassword != nil || updateUser.NewPassword != nil {
 		if updateUser.OldPassword == nil || updateUser.NewPassword == nil {
 			return helper.NewAppError(
@@ -84,9 +83,9 @@ func (u *userServiceImpl) UpdateUser(ctx context.Context, updateUser *model.Upda
 			)
 		}
 
-		user, err := u.repository.FindById(ctx, updateUser.ID)
+		result, err := u.repository.FindById(ctx, updateUser.ID)
 		if err != nil {
-			if errors.Is(err, domain.ErrUserNotFound) {
+			if errors.Is(err, helper.ErrUserNotFound) {
 				return helper.NewAppError(
 					http.StatusNotFound,
 					"User Not Found",
@@ -101,7 +100,7 @@ func (u *userServiceImpl) UpdateUser(ctx context.Context, updateUser *model.Upda
 			)
 		}
 
-		if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(*updateUser.OldPassword)); err != nil {
+		if err := bcrypt.CompareHashAndPassword([]byte(result.Password), []byte(*updateUser.OldPassword)); err != nil {
 			return helper.NewAppError(
 				http.StatusBadRequest,
 				"Invalid Request",
@@ -125,7 +124,7 @@ func (u *userServiceImpl) UpdateUser(ctx context.Context, updateUser *model.Upda
 
 	err := u.repository.Update(ctx, updateUser)
 	if err != nil {
-		if errors.Is(err, domain.ErrUserNotFound) {
+		if errors.Is(err, helper.ErrUserNotFound) {
 			return helper.NewAppError(
 				http.StatusNotFound,
 				"User Not Found",
@@ -146,7 +145,7 @@ func (u *userServiceImpl) UpdateUser(ctx context.Context, updateUser *model.Upda
 func (u *userServiceImpl) DeleteUser(ctx context.Context, id int) *helper.AppError {
 	err := u.repository.Delete(ctx, id)
 	if err != nil {
-		if errors.Is(err, domain.ErrUserNotFound) {
+		if errors.Is(err, helper.ErrUserNotFound) {
 			return helper.NewAppError(
 				http.StatusNotFound,
 				"User Not Found",

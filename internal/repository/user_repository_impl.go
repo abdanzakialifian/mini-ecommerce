@@ -3,8 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
-	"mini-ecommerce/internal/domain"
-	"mini-ecommerce/internal/domain/model"
+	"mini-ecommerce/internal/domain/user"
 	"mini-ecommerce/internal/helper"
 
 	"github.com/jackc/pgx/v5"
@@ -17,11 +16,11 @@ type userRepositoryImpl struct {
 	db *pgxpool.Pool
 }
 
-func NewUserRepositoryImpl(db *pgxpool.Pool) domain.UserRepository {
+func NewUserRepositoryImpl(db *pgxpool.Pool) user.UserRepository {
 	return &userRepositoryImpl{db: db}
 }
 
-func (u *userRepositoryImpl) Create(ctx context.Context, user *model.User) error {
+func (u *userRepositoryImpl) Create(ctx context.Context, user *user.User) error {
 	query := "INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING id"
 	err := u.db.QueryRow(
 		ctx,
@@ -34,7 +33,7 @@ func (u *userRepositoryImpl) Create(ctx context.Context, user *model.User) error
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
-			return domain.ErrUserAlreadyExists
+			return helper.ErrUserAlreadyExists
 		}
 		return err
 	}
@@ -42,65 +41,65 @@ func (u *userRepositoryImpl) Create(ctx context.Context, user *model.User) error
 	return nil
 }
 
-func (u *userRepositoryImpl) FindByEmail(ctx context.Context, login model.LoginUser) (model.User, string, error) {
+func (u *userRepositoryImpl) FindByEmail(ctx context.Context, login user.LoginUser) (user.User, string, error) {
 	query := "SELECT id, name, email, password FROM users WHERE email = $1"
-	var user model.User
+	var result user.User
 	err := u.db.QueryRow(
 		ctx,
 		query,
 		login.Email,
 	).Scan(
-		&user.ID,
-		&user.Name,
-		&user.Email,
-		&user.Password,
+		&result.ID,
+		&result.Name,
+		&result.Email,
+		&result.Password,
 	)
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return model.User{}, "", domain.ErrUserInvalid
+			return user.User{}, "", helper.ErrUserInvalid
 		}
-		return model.User{}, "", err
+		return user.User{}, "", err
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(login.Password)); err != nil {
-		return model.User{}, "", domain.ErrUserInvalid
+	if err := bcrypt.CompareHashAndPassword([]byte(result.Password), []byte(login.Password)); err != nil {
+		return user.User{}, "", helper.ErrUserInvalid
 	}
 
-	accessToken, err := helper.GenerateAccessToken(user.ID, user.Name, user.Email)
+	accessToken, err := helper.GenerateAccessToken(result.ID, result.Name, result.Email)
 
 	if err != nil {
-		return model.User{}, "", err
+		return user.User{}, "", err
 	}
 
-	return user, accessToken, nil
+	return result, accessToken, nil
 }
 
-func (u *userRepositoryImpl) FindById(ctx context.Context, id int) (model.User, error) {
+func (u *userRepositoryImpl) FindById(ctx context.Context, id int) (user.User, error) {
 	query := "SELECT id, name, email, password FROM users WHERE id = $1"
-	var user model.User
+	var result user.User
 	err := u.db.QueryRow(
 		ctx,
 		query,
 		id,
 	).Scan(
-		&user.ID,
-		&user.Name,
-		&user.Email,
-		&user.Password,
+		&result.ID,
+		&result.Name,
+		&result.Email,
+		&result.Password,
 	)
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return model.User{}, domain.ErrUserNotFound
+			return user.User{}, helper.ErrUserNotFound
 		}
-		return model.User{}, err
+		return user.User{}, err
 	}
 
-	return user, nil
+	return result, nil
 }
 
-func (u *userRepositoryImpl) Update(ctx context.Context, updateUser *model.UpdateUser) error {
+func (u *userRepositoryImpl) Update(ctx context.Context, updateUser *user.UpdateUser) error {
 	query := "UPDATE users SET name = COALESCE($1, name), email = COALESCE($2, email), password = COALESCE($3, password) WHERE id = $4 RETURNING id, name, email"
 	err := u.db.QueryRow(
 		ctx,
@@ -118,11 +117,11 @@ func (u *userRepositoryImpl) Update(ctx context.Context, updateUser *model.Updat
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
-			return domain.ErrUserAlreadyExists
+			return helper.ErrUserAlreadyExists
 		}
 
 		if errors.Is(err, pgx.ErrNoRows) {
-			return domain.ErrUserNotFound
+			return helper.ErrUserNotFound
 		}
 		return err
 	}
@@ -138,7 +137,7 @@ func (u *userRepositoryImpl) Delete(ctx context.Context, id int) error {
 	}
 
 	if cmd.RowsAffected() == 0 {
-		return domain.ErrUserNotFound
+		return helper.ErrUserNotFound
 	}
 
 	return nil

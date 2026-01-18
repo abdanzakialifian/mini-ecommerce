@@ -3,24 +3,23 @@ package service
 import (
 	"context"
 	"errors"
-	"mini-ecommerce/internal/domain"
-	"mini-ecommerce/internal/domain/model"
+	"mini-ecommerce/internal/domain/product"
 	"mini-ecommerce/internal/helper"
 	"net/http"
 )
 
 type productServiceImpl struct {
-	repository domain.ProductRepository
+	repository product.ProductRepository
 }
 
-func NewProductServiceImpl(repository domain.ProductRepository) domain.ProductService {
+func NewProductServiceImpl(repository product.ProductRepository) product.ProductService {
 	return &productServiceImpl{repository: repository}
 }
 
-func (p *productServiceImpl) CreateProduct(ctx context.Context, product *model.Product) *helper.AppError {
+func (p *productServiceImpl) CreateProduct(ctx context.Context, product *product.Product) *helper.AppError {
 	err := p.repository.Create(ctx, product)
 	if err != nil {
-		if errors.Is(err, domain.ErrProductAlreadyExists) {
+		if errors.Is(err, helper.ErrProductAlreadyExists) {
 			return helper.NewAppError(
 				http.StatusConflict,
 				"Product Already Exists",
@@ -38,29 +37,29 @@ func (p *productServiceImpl) CreateProduct(ctx context.Context, product *model.P
 	return nil
 }
 
-func (p *productServiceImpl) GetProduct(ctx context.Context, id string) (model.Product, *helper.AppError) {
-	product, err := p.repository.Find(ctx, id)
+func (p *productServiceImpl) GetProduct(ctx context.Context, id string) (product.Product, *helper.AppError) {
+	result, err := p.repository.Find(ctx, id)
 	if err != nil {
-		if errors.Is(err, domain.ErrProductNotFound) {
-			return model.Product{}, helper.NewAppError(
+		if errors.Is(err, helper.ErrProductNotFound) {
+			return product.Product{}, helper.NewAppError(
 				http.StatusNotFound,
 				"Product Not Found",
 				err,
 			)
 		}
 
-		return model.Product{}, helper.NewAppError(
+		return product.Product{}, helper.NewAppError(
 			http.StatusInternalServerError,
 			"Internal Server Error",
 			err,
 		)
 	}
 
-	return product, nil
+	return result, nil
 }
 
-func (p productServiceImpl) GetProducts(ctx context.Context) ([]model.Product, *helper.AppError) {
-	products, err := p.repository.FindAll(ctx)
+func (p productServiceImpl) GetProducts(ctx context.Context) ([]product.Product, *helper.AppError) {
+	results, err := p.repository.FindAll(ctx)
 	if err != nil {
 		return nil, helper.NewAppError(
 			http.StatusInternalServerError,
@@ -69,14 +68,14 @@ func (p productServiceImpl) GetProducts(ctx context.Context) ([]model.Product, *
 		)
 	}
 
-	return products, nil
+	return results, nil
 }
 
-func (p *productServiceImpl) UpdateProduct(ctx context.Context, updateProduct *model.UpdateProduct) *helper.AppError {
+func (p *productServiceImpl) UpdateProduct(ctx context.Context, updateProduct *product.UpdateProduct) *helper.AppError {
 	err := p.repository.Update(ctx, updateProduct)
 
 	if err != nil {
-		if errors.Is(err, domain.ErrProductNotFound) {
+		if errors.Is(err, helper.ErrProductNotFound) {
 			return helper.NewAppError(
 				http.StatusNotFound,
 				"Product Not Found",
@@ -98,7 +97,7 @@ func (p *productServiceImpl) DeleteProduct(ctx context.Context, id string) *help
 	err := p.repository.Delete(ctx, id)
 
 	if err != nil {
-		if errors.Is(err, domain.ErrProductNotFound) {
+		if errors.Is(err, helper.ErrProductNotFound) {
 			return helper.NewAppError(
 				http.StatusNotFound,
 				"Product Not Found",

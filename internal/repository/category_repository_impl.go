@@ -3,8 +3,8 @@ package repository
 import (
 	"context"
 	"errors"
-	"mini-ecommerce/internal/domain"
-	"mini-ecommerce/internal/domain/model"
+	"mini-ecommerce/internal/domain/category"
+	"mini-ecommerce/internal/helper"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -15,11 +15,11 @@ type categoryRepositoryImpl struct {
 	db *pgxpool.Pool
 }
 
-func NewCategoryRepositoryImpl(db *pgxpool.Pool) domain.CategoryRepository {
+func NewCategoryRepositoryImpl(db *pgxpool.Pool) category.CategoryRepository {
 	return &categoryRepositoryImpl{db: db}
 }
 
-func (c *categoryRepositoryImpl) Create(ctx context.Context, category *model.Category) error {
+func (c *categoryRepositoryImpl) Create(ctx context.Context, category *category.Category) error {
 	query := "INSERT INTO categories (name) VALUES ($1) RETURNING id"
 	err := c.db.QueryRow(
 		ctx,
@@ -30,7 +30,7 @@ func (c *categoryRepositoryImpl) Create(ctx context.Context, category *model.Cat
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
-			return domain.ErrCategoryAlreadyExists
+			return helper.ErrCategoryAlreadyExists
 		}
 		return err
 	}
@@ -38,29 +38,29 @@ func (c *categoryRepositoryImpl) Create(ctx context.Context, category *model.Cat
 	return nil
 }
 
-func (c *categoryRepositoryImpl) Find(ctx context.Context, id string) (model.Category, error) {
+func (c *categoryRepositoryImpl) Find(ctx context.Context, id string) (category.Category, error) {
 	query := "SELECT id, name FROM categories WHERE id = $1"
-	var category model.Category
+	var result category.Category
 	err := c.db.QueryRow(
 		ctx,
 		query,
 		id,
 	).Scan(
-		&category.ID,
-		&category.Name,
+		&result.ID,
+		&result.Name,
 	)
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return model.Category{}, domain.ErrCategoryNotFound
+			return category.Category{}, helper.ErrCategoryNotFound
 		}
-		return model.Category{}, err
+		return category.Category{}, err
 	}
 
-	return category, nil
+	return result, nil
 }
 
-func (c *categoryRepositoryImpl) FindAll(ctx context.Context) ([]model.Category, error) {
+func (c *categoryRepositoryImpl) FindAll(ctx context.Context) ([]category.Category, error) {
 	query := "SELECT id, name FROM categories"
 	rows, err := c.db.Query(ctx, query)
 	if err != nil {
@@ -68,27 +68,27 @@ func (c *categoryRepositoryImpl) FindAll(ctx context.Context) ([]model.Category,
 	}
 	defer rows.Close()
 
-	var categories []model.Category
+	var results []category.Category
 
 	for rows.Next() {
-		var category model.Category
+		var category category.Category
 		if err := rows.Scan(
 			&category.ID,
 			&category.Name,
 		); err != nil {
 			return nil, err
 		}
-		categories = append(categories, category)
+		results = append(results, category)
 	}
 
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 
-	return categories, nil
+	return results, nil
 }
 
-func (c *categoryRepositoryImpl) Update(ctx context.Context, updateCategory *model.UpdateCategory) error {
+func (c *categoryRepositoryImpl) Update(ctx context.Context, updateCategory *category.UpdateCategory) error {
 	query := "UPDATE categories SET name = $1, updated_at = NOW() WHERE id = $2 RETURNING id, name"
 	err := c.db.QueryRow(
 		ctx,
@@ -102,7 +102,7 @@ func (c *categoryRepositoryImpl) Update(ctx context.Context, updateCategory *mod
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return domain.ErrCategoryNotFound
+			return helper.ErrCategoryNotFound
 		}
 		return err
 	}
@@ -118,7 +118,7 @@ func (c *categoryRepositoryImpl) Delete(ctx context.Context, id string) error {
 	}
 
 	if cmd.RowsAffected() == 0 {
-		return domain.ErrCategoryNotFound
+		return helper.ErrCategoryNotFound
 	}
 
 	return nil

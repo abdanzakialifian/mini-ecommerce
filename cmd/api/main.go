@@ -4,7 +4,10 @@ import (
 	"context"
 	"log"
 	"mini-ecommerce/internal/database"
-	"mini-ecommerce/internal/handler"
+	"mini-ecommerce/internal/handler/cart"
+	"mini-ecommerce/internal/handler/category"
+	"mini-ecommerce/internal/handler/product"
+	"mini-ecommerce/internal/handler/user"
 	"mini-ecommerce/internal/helper"
 	"mini-ecommerce/internal/middleware"
 	"mini-ecommerce/internal/repository"
@@ -32,20 +35,20 @@ func main() {
 
 	productRepository := repository.NewProductRepositoryImpl(db)
 	productService := service.NewProductServiceImpl(productRepository)
-	productHandler := handler.NewProductHandler(productService)
+	productHandler := product.NewHandler(productService)
 
 	categoryRepository := repository.NewCategoryRepositoryImpl(db)
 	categoryService := service.NewCategoryServiceImpl(categoryRepository)
-	categoryHandler := handler.NewCategoryHandler(categoryService)
+	categoryHandler := category.NewHandler(categoryService)
 
 	userRepository := repository.NewUserRepositoryImpl(db)
 	userService := service.NewUserServiceImpl(userRepository)
-	userHandler := handler.NewUserHandler(userService)
+	userHandler := user.NewHandler(userService)
 
 	cartRepository := repository.NewCartRepositoryImpl(tx)
 	cartItemRepository := repository.NewCartItemRepositoryImpl(tx)
 	cartService := service.NewCartServiceImpl(tx, cartRepository, cartItemRepository)
-	cartHandler := handler.NewCartHandler(cartService)
+	cartHandler := cart.NewHandler(cartService)
 
 	r := gin.New()
 

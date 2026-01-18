@@ -2,8 +2,8 @@ package middleware
 
 import (
 	"errors"
-	"mini-ecommerce/internal/handler/response"
 	"mini-ecommerce/internal/helper"
+	"mini-ecommerce/internal/response"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

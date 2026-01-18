@@ -3,24 +3,23 @@ package service
 import (
 	"context"
 	"errors"
-	"mini-ecommerce/internal/domain"
-	"mini-ecommerce/internal/domain/model"
+	"mini-ecommerce/internal/domain/category"
 	"mini-ecommerce/internal/helper"
 	"net/http"
 )
 
 type categoryServiceImpl struct {
-	repository domain.CategoryRepository
+	repository category.CategoryRepository
 }
 
-func NewCategoryServiceImpl(repository domain.CategoryRepository) domain.CategoryService {
+func NewCategoryServiceImpl(repository category.CategoryRepository) category.CategoryService {
 	return &categoryServiceImpl{repository: repository}
 }
 
-func (c *categoryServiceImpl) CreateCategory(ctx context.Context, category *model.Category) *helper.AppError {
+func (c *categoryServiceImpl) CreateCategory(ctx context.Context, category *category.Category) *helper.AppError {
 	err := c.repository.Create(ctx, category)
 	if err != nil {
-		if errors.Is(err, domain.ErrCategoryAlreadyExists) {
+		if errors.Is(err, helper.ErrCategoryAlreadyExists) {
 			return helper.NewAppError(
 				http.StatusConflict,
 				"Product Already Exists",
@@ -38,29 +37,29 @@ func (c *categoryServiceImpl) CreateCategory(ctx context.Context, category *mode
 	return nil
 }
 
-func (c *categoryServiceImpl) GetCategory(ctx context.Context, id string) (model.Category, *helper.AppError) {
-	category, err := c.repository.Find(ctx, id)
+func (c *categoryServiceImpl) GetCategory(ctx context.Context, id string) (category.Category, *helper.AppError) {
+	result, err := c.repository.Find(ctx, id)
 	if err != nil {
-		if errors.Is(err, domain.ErrCategoryNotFound) {
-			return model.Category{}, helper.NewAppError(
+		if errors.Is(err, helper.ErrCategoryNotFound) {
+			return category.Category{}, helper.NewAppError(
 				http.StatusNotFound,
 				"Product Not Found",
 				err,
 			)
 		}
 
-		return model.Category{}, helper.NewAppError(
+		return category.Category{}, helper.NewAppError(
 			http.StatusInternalServerError,
 			"Internal Server Error",
 			err,
 		)
 	}
 
-	return category, nil
+	return result, nil
 }
 
-func (c *categoryServiceImpl) GetCategories(ctx context.Context) ([]model.Category, *helper.AppError) {
-	categories, err := c.repository.FindAll(ctx)
+func (c *categoryServiceImpl) GetCategories(ctx context.Context) ([]category.Category, *helper.AppError) {
+	results, err := c.repository.FindAll(ctx)
 	if err != nil {
 		return nil, helper.NewAppError(
 			http.StatusInternalServerError,
@@ -69,13 +68,13 @@ func (c *categoryServiceImpl) GetCategories(ctx context.Context) ([]model.Catego
 		)
 	}
 
-	return categories, nil
+	return results, nil
 }
 
-func (c *categoryServiceImpl) UpdateCategory(ctx context.Context, updateCategory *model.UpdateCategory) *helper.AppError {
+func (c *categoryServiceImpl) UpdateCategory(ctx context.Context, updateCategory *category.UpdateCategory) *helper.AppError {
 	err := c.repository.Update(ctx, updateCategory)
 	if err != nil {
-		if errors.Is(err, domain.ErrCategoryNotFound) {
+		if errors.Is(err, helper.ErrCategoryNotFound) {
 			return helper.NewAppError(
 				http.StatusNotFound,
 				"Product Not Found",
@@ -96,7 +95,7 @@ func (c *categoryServiceImpl) UpdateCategory(ctx context.Context, updateCategory
 func (c *categoryServiceImpl) DeleteCategory(ctx context.Context, id string) *helper.AppError {
 	err := c.repository.Delete(ctx, id)
 	if err != nil {
-		if errors.Is(err, domain.ErrCategoryNotFound) {
+		if errors.Is(err, helper.ErrCategoryNotFound) {
 			return helper.NewAppError(
 				http.StatusNotFound,
 				"Product Not Found",
