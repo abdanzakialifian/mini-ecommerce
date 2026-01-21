@@ -100,24 +100,19 @@ func (o *orderRepositoryImpl) Update(ctx context.Context, updateOrder *order.Upd
 	return nil
 }
 
-func (o *orderRepositoryImpl) UpdateStatus(ctx context.Context, id int, status order.Status) (order.Order, error) {
+func (o *orderRepositoryImpl) UpdateStatus(ctx context.Context, id int, status order.Status) error {
 	db := o.tx.GetTx(ctx)
-	query := "UPDATE orders SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING id, user_id, total_price, status"
-	var result order.Order
-	if err := db.QueryRow(
-		ctx,
-		query,
-		id,
-	).Scan(
-		&result.ID,
-		&result.UserID,
-		&result.TotalPrice,
-		&result.Status,
-	); err != nil {
-		return order.Order{}, err
+	query := "UPDATE orders SET status = $1, updated_at = NOW() WHERE id = $2"
+	cmd, err := db.Exec(ctx, query, status, id)
+	if err != nil {
+		return err
 	}
 
-	return result, nil
+	if cmd.RowsAffected() == 0 {
+		return helper.ErrOrderNotFound
+	}
+
+	return nil
 }
 
 func (o *orderRepositoryImpl) Delete(ctx context.Context, id int) error {

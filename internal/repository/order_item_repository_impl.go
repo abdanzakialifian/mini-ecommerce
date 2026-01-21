@@ -44,7 +44,6 @@ func (o *orderItemRepositoryImpl) FindOrderItems(ctx context.Context, orderId in
 	defer rows.Close()
 
 	var results []order.OrderItem
-
 	for rows.Next() {
 		var orderItem order.OrderItem
 		if err := rows.Scan(

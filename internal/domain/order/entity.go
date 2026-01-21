@@ -28,3 +28,13 @@ type OrderItem struct {
 	Price     float64
 	Quantity  int
 }
+
+type OrderDetail struct {
+	Order Order
+	Items []OrderItem
+}
+
+type CreateOrderItem struct {
+	ProductID string
+	Quantity  int
+}

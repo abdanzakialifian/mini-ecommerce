@@ -13,10 +13,11 @@ import (
 
 type productRepositoryImpl struct {
 	db *pgxpool.Pool
+	tx *helper.Transaction
 }
 
-func NewProductRepositoryImpl(db *pgxpool.Pool) product.ProductRepository {
-	return &productRepositoryImpl{db: db}
+func NewProductRepositoryImpl(db *pgxpool.Pool, tx *helper.Transaction) product.ProductRepository {
+	return &productRepositoryImpl{db: db, tx: tx}
 }
 
 func (p *productRepositoryImpl) Create(ctx context.Context, product *product.Product) error {
@@ -126,6 +127,21 @@ func (p *productRepositoryImpl) Update(ctx context.Context, updateProduct *produ
 			return helper.ErrProductNotFound
 		}
 		return err
+	}
+
+	return nil
+}
+
+func (p *productRepositoryImpl) UpdateStock(ctx context.Context, id string, quantity int) error {
+	db := p.tx.GetTx(ctx)
+	query := "UPDATE products SET stock = stock - $1 WHERE id = $2 AND stock >= $1"
+	cmd, err := db.Exec(ctx, query, quantity, id)
+	if err != nil {
+		return err
+	}
+
+	if cmd.RowsAffected() == 0 {
+		return helper.ErrProductInsufficientStock
 	}
 
 	return nil

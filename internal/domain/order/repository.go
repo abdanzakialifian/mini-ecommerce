@@ -7,7 +7,7 @@ type OrderRepository interface {
 	FindById(ctx context.Context, id int) (Order, error)
 	FindByUserId(ctx context.Context, userId int) ([]Order, error)
 	Update(ctx context.Context, updateOrder *UpdateOrder) error
-	UpdateStatus(ctx context.Context, id int, status Status) (Order, error)
+	UpdateStatus(ctx context.Context, id int, status Status) error
 	Delete(ctx context.Context, id int) error
 }
 

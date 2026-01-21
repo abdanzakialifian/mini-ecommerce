@@ -33,7 +33,7 @@ func main() {
 
 	tx := helper.NewTransaction(db)
 
-	productRepository := repository.NewProductRepositoryImpl(db)
+	productRepository := repository.NewProductRepositoryImpl(db, tx)
 	productService := service.NewProductServiceImpl(productRepository)
 	productHandler := product.NewHandler(productService)
 
