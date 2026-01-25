@@ -13,7 +13,7 @@ type orderServiceImpl struct {
 	tx                  *helper.Transaction
 	orderRepository     order.OrderRepository
 	orderItemRepository order.OrderItemRepository
-	productRepository   product.ProductRepository
+	productRepository   product.Repository
 }
 
 func NewOrderService(tx *helper.Transaction, orderRepository order.OrderRepository, orderItemRepository order.OrderItemRepository) order.OrderService {
@@ -187,8 +187,8 @@ func (o *orderServiceImpl) GetOrderByUserId(ctx context.Context, userId int) ([]
 	return results, nil
 }
 
-func (o *orderServiceImpl) UpdateOrderStatus(ctx context.Context, id int, status order.UpdateOrder) *helper.AppError {
-	order, err := o.orderRepository.FindById(ctx, id)
+func (o *orderServiceImpl) UpdateOrderStatus(ctx context.Context, id int, status order.Status) *helper.AppError {
+	_, err := o.orderRepository.FindById(ctx, id)
 	if err != nil {
 		if errors.Is(err, helper.ErrOrderNotFound) {
 			return helper.NewAppError(
@@ -205,7 +205,7 @@ func (o *orderServiceImpl) UpdateOrderStatus(ctx context.Context, id int, status
 		)
 	}
 
-	if err := o.orderRepository.UpdateStatus(ctx, order.ID, order.Status); err != nil {
+	if err := o.orderRepository.UpdateStatus(ctx, id, status); err != nil {
 		if errors.Is(err, helper.ErrOrderNotFound) {
 			return helper.NewAppError(
 				http.StatusNotFound,

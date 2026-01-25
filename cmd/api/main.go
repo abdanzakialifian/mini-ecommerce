@@ -6,6 +6,7 @@ import (
 	"mini-ecommerce/internal/database"
 	"mini-ecommerce/internal/handler/cart"
 	"mini-ecommerce/internal/handler/category"
+	"mini-ecommerce/internal/handler/order"
 	"mini-ecommerce/internal/handler/product"
 	"mini-ecommerce/internal/handler/user"
 	"mini-ecommerce/internal/helper"
@@ -50,6 +51,11 @@ func main() {
 	cartService := service.NewCart(tx, cartRepository, cartItemRepository)
 	cartHandler := cart.NewHandler(cartService)
 
+	orderRepository := repository.NewOrderRepositoryImpl(tx)
+	orderItemRepository := repository.NewOrderItemRepositoryImpl(tx)
+	orderService := service.NewOrderService(tx, orderRepository, orderItemRepository)
+	orderHandler := order.NewHandler(orderService)
+
 	r := gin.New()
 
 	r.Use(
@@ -85,6 +91,12 @@ func main() {
 	api.GET("/carts", cartHandler.GetItems)
 	api.PUT("/carts", cartHandler.UpdateItemQuantity)
 	api.DELETE("/carts/:cart_item_id", cartHandler.DeleteItem)
+
+	api.POST("/orders", orderHandler.Create)
+	api.GET("/orders/:id", orderHandler.Get)
+	api.GET("/orders", orderHandler.GetAll)
+	api.PUT("/orders/:id/status", orderHandler.Update)
+	api.POST("/orders/:id/cancel", orderHandler.Cancel)
 
 	if err := r.Run(":8080"); err != nil {
 		log.Fatalf("Server failed : %v", err)

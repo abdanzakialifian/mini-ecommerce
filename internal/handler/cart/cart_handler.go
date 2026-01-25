@@ -119,7 +119,7 @@ func (h *CartHandler) DeleteItem(c *gin.Context) {
 	cartItemId, err := strconv.Atoi(id)
 	if err != nil {
 		c.Error(helper.NewAppError(
-			http.StatusBadRequest,
+			http.StatusInternalServerError,
 			"Internal Server Error",
 			errors.New("Error convert cart item id"),
 		))
