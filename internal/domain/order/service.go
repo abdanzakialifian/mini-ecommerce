@@ -5,10 +5,10 @@ import (
 	"mini-ecommerce/internal/helper"
 )
 
-type OrderService interface {
-	CreateOrder(ctx context.Context, userId int, createOrderItems []CreateOrderItem) (OrderDetail, *helper.AppError)
-	GetOrder(ctx context.Context, id int) (OrderDetail, *helper.AppError)
-	GetOrderByUserId(ctx context.Context, userId int) ([]OrderDetail, *helper.AppError)
-	UpdateOrderStatus(ctx context.Context, id int, status Status) *helper.AppError
-	CancelOrder(ctx context.Context, id int) *helper.AppError
+type Service interface {
+	Create(ctx context.Context, userId int, newItems []NewItem) (Detail, *helper.AppError)
+	Get(ctx context.Context, id int) (Detail, *helper.AppError)
+	GetByUserId(ctx context.Context, userId int) ([]Detail, *helper.AppError)
+	UpdateStatus(ctx context.Context, id int, status Status) *helper.AppError
+	Cancel(ctx context.Context, id int) *helper.AppError
 }

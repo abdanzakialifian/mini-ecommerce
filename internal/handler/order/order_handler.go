@@ -12,10 +12,10 @@ import (
 )
 
 type OrderHandler struct {
-	orderService order.OrderService
+	orderService order.Service
 }
 
-func NewHandler(orderService order.OrderService) *OrderHandler {
+func NewHandler(orderService order.Service) *OrderHandler {
 	return &OrderHandler{orderService: orderService}
 }
 
@@ -23,15 +23,6 @@ func (h *OrderHandler) Create(c *gin.Context) {
 	userId := c.MustGet("user_id").(int)
 
 	var req CreateRequest
-	if len(req.Items) == 0 {
-		c.Error(helper.NewAppError(
-			http.StatusBadRequest,
-			"Order items cannot be empty",
-			nil,
-		))
-		return
-	}
-
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.Error(helper.NewAppError(
 			http.StatusBadRequest,
@@ -41,30 +32,29 @@ func (h *OrderHandler) Create(c *gin.Context) {
 		return
 	}
 
-	var items []order.CreateOrderItem
+	var newItems []order.NewItem
 	for _, item := range req.Items {
-		orderItem := order.CreateOrderItem{
+		newItem := order.NewItem{
 			ProductID: item.ProductID,
 			Quantity:  item.Quantity,
 		}
-
-		items = append(items, orderItem)
+		newItems = append(newItems, newItem)
 	}
 
-	orderDetail, appErr := h.orderService.CreateOrder(c.Request.Context(), userId, items)
+	orderDetail, appErr := h.orderService.Create(c.Request.Context(), userId, newItems)
 	if appErr != nil {
 		c.Error(appErr)
 		return
 	}
 
 	itemResponses := []ItemResponse{}
-	for _, detail := range orderDetail.Items {
+	for _, item := range orderDetail.Items {
 		itemResponse := ItemResponse{
-			ID:        detail.ID,
-			OrderID:   detail.OrderID,
-			ProductID: detail.ProductID,
-			Price:     detail.Price,
-			Quantity:  detail.Quantity,
+			ID:        item.ID,
+			OrderID:   item.OrderID,
+			ProductID: item.ProductID,
+			Price:     item.Price,
+			Quantity:  item.Quantity,
 		}
 		itemResponses = append(itemResponses, itemResponse)
 	}
@@ -73,10 +63,10 @@ func (h *OrderHandler) Create(c *gin.Context) {
 		"Success Create Order",
 		DetailResponse{
 			Order: Response{
-				ID:         orderDetail.Order.ID,
-				UserID:     orderDetail.Order.UserID,
-				TotalPrice: orderDetail.Order.TotalPrice,
-				Status:     orderDetail.Order.Status,
+				ID:         orderDetail.Data.ID,
+				UserID:     orderDetail.Data.UserID,
+				TotalPrice: orderDetail.Data.TotalPrice,
+				Status:     orderDetail.Data.Status,
 			},
 			Items: itemResponses,
 		},
@@ -106,20 +96,20 @@ func (h *OrderHandler) Get(c *gin.Context) {
 		return
 	}
 
-	detail, appErr := h.orderService.GetOrder(c.Request.Context(), orderId)
+	orderDetail, appErr := h.orderService.Get(c.Request.Context(), orderId)
 	if appErr != nil {
 		c.Error(appErr)
 		return
 	}
 
 	itemResponses := []ItemResponse{}
-	for _, detail := range detail.Items {
+	for _, item := range orderDetail.Items {
 		itemResponse := ItemResponse{
-			ID:        detail.ID,
-			OrderID:   detail.OrderID,
-			ProductID: detail.ProductID,
-			Price:     detail.Price,
-			Quantity:  detail.Quantity,
+			ID:        item.ID,
+			OrderID:   item.OrderID,
+			ProductID: item.ProductID,
+			Price:     item.Price,
+			Quantity:  item.Quantity,
 		}
 		itemResponses = append(itemResponses, itemResponse)
 	}
@@ -128,10 +118,10 @@ func (h *OrderHandler) Get(c *gin.Context) {
 		"Success Get Order",
 		DetailResponse{
 			Order: Response{
-				ID:         detail.Order.ID,
-				UserID:     detail.Order.UserID,
-				TotalPrice: detail.Order.TotalPrice,
-				Status:     detail.Order.Status,
+				ID:         orderDetail.Data.ID,
+				UserID:     orderDetail.Data.UserID,
+				TotalPrice: orderDetail.Data.TotalPrice,
+				Status:     orderDetail.Data.Status,
 			},
 			Items: itemResponses,
 		},
@@ -142,36 +132,35 @@ func (h *OrderHandler) Get(c *gin.Context) {
 func (h *OrderHandler) GetAll(c *gin.Context) {
 	userId := c.MustGet("user_id").(int)
 
-	details, appErr := h.orderService.GetOrderByUserId(c.Request.Context(), userId)
+	orderDetails, appErr := h.orderService.GetByUserId(c.Request.Context(), userId)
 	if appErr != nil {
 		c.Error(appErr)
 		return
 	}
 
 	var detailResponses []DetailResponse
-	for _, detail := range details {
+	for _, orderDetail := range orderDetails {
 		itemResponses := []ItemResponse{}
-		for _, detail := range detail.Items {
+		for _, item := range orderDetail.Items {
 			itemResponse := ItemResponse{
-				ID:        detail.ID,
-				OrderID:   detail.OrderID,
-				ProductID: detail.ProductID,
-				Price:     detail.Price,
-				Quantity:  detail.Quantity,
+				ID:        item.ID,
+				OrderID:   item.OrderID,
+				ProductID: item.ProductID,
+				Price:     item.Price,
+				Quantity:  item.Quantity,
 			}
 			itemResponses = append(itemResponses, itemResponse)
 		}
 
 		detailResponse := DetailResponse{
 			Order: Response{
-				ID:         detail.Order.ID,
-				UserID:     detail.Order.UserID,
-				TotalPrice: detail.Order.TotalPrice,
-				Status:     detail.Order.Status,
+				ID:         orderDetail.Data.ID,
+				UserID:     orderDetail.Data.UserID,
+				TotalPrice: orderDetail.Data.TotalPrice,
+				Status:     orderDetail.Data.Status,
 			},
 			Items: itemResponses,
 		}
-
 		detailResponses = append(detailResponses, detailResponse)
 	}
 
@@ -214,8 +203,7 @@ func (h *OrderHandler) Update(c *gin.Context) {
 		return
 	}
 
-	appErr := h.orderService.UpdateOrderStatus(c.Request.Context(), orderId, req.Status)
-	if appErr != nil {
+	if appErr := h.orderService.UpdateStatus(c.Request.Context(), orderId, req.Status); appErr != nil {
 		c.Error(appErr)
 		return
 	}
@@ -246,8 +234,7 @@ func (h *OrderHandler) Cancel(c *gin.Context) {
 		return
 	}
 
-	appErr := h.orderService.CancelOrder(c.Request.Context(), orderId)
-	if appErr != nil {
+	if appErr := h.orderService.Cancel(c.Request.Context(), orderId); appErr != nil {
 		c.Error(appErr)
 		return
 	}

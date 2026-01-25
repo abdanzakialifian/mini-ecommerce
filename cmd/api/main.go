@@ -51,9 +51,9 @@ func main() {
 	cartService := service.NewCart(tx, cartRepository, cartItemRepository)
 	cartHandler := cart.NewHandler(cartService)
 
-	orderRepository := repository.NewOrderRepositoryImpl(tx)
-	orderItemRepository := repository.NewOrderItemRepositoryImpl(tx)
-	orderService := service.NewOrderService(tx, orderRepository, orderItemRepository)
+	orderRepository := repository.NewOrder(tx)
+	orderItemRepository := repository.NewOrderItem(tx)
+	orderService := service.NewOrder(tx, orderRepository, orderItemRepository)
 	orderHandler := order.NewHandler(orderService)
 
 	r := gin.New()

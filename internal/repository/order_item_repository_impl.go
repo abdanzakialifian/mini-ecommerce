@@ -10,11 +10,11 @@ type orderItemRepositoryImpl struct {
 	tx *helper.Transaction
 }
 
-func NewOrderItemRepositoryImpl(tx *helper.Transaction) order.OrderItemRepository {
+func NewOrderItem(tx *helper.Transaction) order.ItemRepository {
 	return &orderItemRepositoryImpl{tx: tx}
 }
 
-func (o *orderItemRepositoryImpl) CreateOrderItems(ctx context.Context, items []order.OrderItem) error {
+func (o *orderItemRepositoryImpl) CreateItems(ctx context.Context, items []order.Item) error {
 	db := o.tx.GetTx(ctx)
 	query := "INSERT INTO order_items (order_id, product_id, price, quantity) VALUES ($1, $2, $3, $4) RETURNING id"
 
@@ -34,7 +34,7 @@ func (o *orderItemRepositoryImpl) CreateOrderItems(ctx context.Context, items []
 	return nil
 }
 
-func (o *orderItemRepositoryImpl) FindOrderItems(ctx context.Context, orderId int) ([]order.OrderItem, error) {
+func (o *orderItemRepositoryImpl) FindItems(ctx context.Context, orderId int) ([]order.Item, error) {
 	db := o.tx.GetTx(ctx)
 	query := "SELECT id, order_id, product_id, price, quantity FROM order_items WHERE order_id = $1"
 	rows, err := db.Query(ctx, query, orderId)
@@ -43,9 +43,9 @@ func (o *orderItemRepositoryImpl) FindOrderItems(ctx context.Context, orderId in
 	}
 	defer rows.Close()
 
-	var results []order.OrderItem
+	var items []order.Item
 	for rows.Next() {
-		var orderItem order.OrderItem
+		var orderItem order.Item
 		if err := rows.Scan(
 			&orderItem.ID,
 			&orderItem.OrderID,
@@ -55,8 +55,8 @@ func (o *orderItemRepositoryImpl) FindOrderItems(ctx context.Context, orderId in
 		); err != nil {
 			return nil, err
 		}
-		results = append(results, orderItem)
+		items = append(items, orderItem)
 	}
 
-	return results, rows.Err()
+	return items, rows.Err()
 }

@@ -11,76 +11,75 @@ import (
 
 type orderServiceImpl struct {
 	tx                  *helper.Transaction
-	orderRepository     order.OrderRepository
-	orderItemRepository order.OrderItemRepository
+	orderRepository     order.Repository
+	orderItemRepository order.ItemRepository
 	productRepository   product.Repository
 }
 
-func NewOrderService(tx *helper.Transaction, orderRepository order.OrderRepository, orderItemRepository order.OrderItemRepository) order.OrderService {
+func NewOrder(tx *helper.Transaction, orderRepository order.Repository, orderItemRepository order.ItemRepository) order.Service {
 	return &orderServiceImpl{tx: tx, orderRepository: orderRepository, orderItemRepository: orderItemRepository}
 }
 
-func (o *orderServiceImpl) CreateOrder(ctx context.Context, userId int, createOrderItems []order.CreateOrderItem) (order.OrderDetail, *helper.AppError) {
-	var orderDetail order.OrderDetail
+func (o *orderServiceImpl) Create(ctx context.Context, userId int, newItems []order.NewItem) (order.Detail, *helper.AppError) {
+	var orderDetail order.Detail
 	err := o.tx.ExecTx(ctx, func(ctx context.Context) error {
 		var totalPrice float64
-		var results []order.OrderItem
 
-		for _, item := range createOrderItems {
-			product, err := o.productRepository.Find(ctx, item.ProductID)
+		var orderItems []order.Item
+		for _, newItem := range newItems {
+			productData, err := o.productRepository.Find(ctx, newItem.ProductID)
 			if err != nil {
 				return err
 			}
 
-			if product.Stock < item.Quantity {
+			if productData.Stock < newItem.Quantity {
 				return helper.ErrProductInsufficientStock
 			}
 
-			itemPrice := product.Price * float64(item.Quantity)
+			itemPrice := productData.Price * float64(newItem.Quantity)
 			totalPrice += itemPrice
 
-			orderItem := order.OrderItem{
-				ProductID: item.ProductID,
-				Price:     product.Price,
-				Quantity:  item.Quantity,
+			orderItem := order.Item{
+				ProductID: newItem.ProductID,
+				Price:     productData.Price,
+				Quantity:  newItem.Quantity,
 			}
 
-			results = append(results, orderItem)
+			orderItems = append(orderItems, orderItem)
 		}
 
-		orderEntity := order.Order{
+		orderData := order.Data{
 			UserID:     userId,
 			TotalPrice: totalPrice,
 			Status:     order.StatusPending,
 		}
 
-		if err := o.orderRepository.Create(ctx, &orderEntity); err != nil {
+		if err := o.orderRepository.Create(ctx, &orderData); err != nil {
 			return err
 		}
 
-		for i := range results {
-			results[i].OrderID = orderEntity.ID
+		for i := range orderItems {
+			orderItems[i].OrderID = orderData.ID
 		}
 
-		if err := o.orderItemRepository.CreateOrderItems(ctx, results); err != nil {
+		if err := o.orderItemRepository.CreateItems(ctx, orderItems); err != nil {
 			return err
 		}
 
-		for _, orderItem := range results {
-			err := o.productRepository.UpdateStock(ctx, orderItem.ProductID, orderItem.Quantity)
-			if err != nil {
+		for _, orderItem := range orderItems {
+			if err := o.productRepository.UpdateStock(ctx, orderItem.ProductID, orderItem.Quantity); err != nil {
 				return err
 			}
 		}
 
-		orderDetail = order.OrderDetail{
-			Order: order.Order{
-				ID:         orderEntity.ID,
-				UserID:     orderEntity.UserID,
-				TotalPrice: orderEntity.TotalPrice,
-				Status:     orderEntity.Status,
+		orderDetail = order.Detail{
+			Data: order.Data{
+				ID:         orderData.ID,
+				UserID:     orderData.UserID,
+				TotalPrice: orderData.TotalPrice,
+				Status:     orderData.Status,
 			},
-			Items: results,
+			Items: orderItems,
 		}
 		return nil
 	})
@@ -112,45 +111,45 @@ func (o *orderServiceImpl) CreateOrder(ctx context.Context, userId int, createOr
 	return orderDetail, nil
 }
 
-func (o *orderServiceImpl) GetOrder(ctx context.Context, id int) (order.OrderDetail, *helper.AppError) {
-	orderEntity, err := o.orderRepository.FindById(ctx, id)
+func (o *orderServiceImpl) Get(ctx context.Context, id int) (order.Detail, *helper.AppError) {
+	orderData, err := o.orderRepository.FindById(ctx, id)
 	if err != nil {
 		if errors.Is(err, helper.ErrOrderNotFound) {
-			return order.OrderDetail{}, helper.NewAppError(
+			return order.Detail{}, helper.NewAppError(
 				http.StatusNotFound,
 				"Order Not Found",
 				err,
 			)
 		}
 
-		return order.OrderDetail{}, helper.NewAppError(
+		return order.Detail{}, helper.NewAppError(
 			http.StatusInternalServerError,
 			"Internal Server Error",
 			err,
 		)
 	}
 
-	orderItems, err := o.orderItemRepository.FindOrderItems(ctx, id)
+	orderItems, err := o.orderItemRepository.FindItems(ctx, id)
 	if err != nil {
-		return order.OrderDetail{}, helper.NewAppError(
+		return order.Detail{}, helper.NewAppError(
 			http.StatusInternalServerError,
 			"Internal Server Error",
 			err,
 		)
 	}
 
-	return order.OrderDetail{
-		Order: order.Order{
-			ID:         orderEntity.ID,
-			UserID:     orderEntity.UserID,
-			TotalPrice: orderEntity.TotalPrice,
-			Status:     orderEntity.Status,
+	return order.Detail{
+		Data: order.Data{
+			ID:         orderData.ID,
+			UserID:     orderData.UserID,
+			TotalPrice: orderData.TotalPrice,
+			Status:     orderData.Status,
 		},
 		Items: orderItems,
 	}, nil
 }
 
-func (o *orderServiceImpl) GetOrderByUserId(ctx context.Context, userId int) ([]order.OrderDetail, *helper.AppError) {
+func (o *orderServiceImpl) GetByUserId(ctx context.Context, userId int) ([]order.Detail, *helper.AppError) {
 	orders, err := o.orderRepository.FindByUserId(ctx, userId)
 	if err != nil {
 		return nil, helper.NewAppError(
@@ -160,9 +159,9 @@ func (o *orderServiceImpl) GetOrderByUserId(ctx context.Context, userId int) ([]
 		)
 	}
 
-	var results []order.OrderDetail
-	for _, item := range orders {
-		orderItems, err := o.orderItemRepository.FindOrderItems(ctx, item.ID)
+	var orderDetails []order.Detail
+	for _, orderData := range orders {
+		orderItems, err := o.orderItemRepository.FindItems(ctx, orderData.ID)
 		if err != nil {
 			return nil, helper.NewAppError(
 				http.StatusInternalServerError,
@@ -171,23 +170,23 @@ func (o *orderServiceImpl) GetOrderByUserId(ctx context.Context, userId int) ([]
 			)
 		}
 
-		orderDetail := order.OrderDetail{
-			Order: order.Order{
-				ID:         item.ID,
-				UserID:     item.UserID,
-				TotalPrice: item.TotalPrice,
-				Status:     item.Status,
+		orderDetail := order.Detail{
+			Data: order.Data{
+				ID:         orderData.ID,
+				UserID:     orderData.UserID,
+				TotalPrice: orderData.TotalPrice,
+				Status:     orderData.Status,
 			},
 			Items: orderItems,
 		}
 
-		results = append(results, orderDetail)
+		orderDetails = append(orderDetails, orderDetail)
 	}
 
-	return results, nil
+	return orderDetails, nil
 }
 
-func (o *orderServiceImpl) UpdateOrderStatus(ctx context.Context, id int, status order.Status) *helper.AppError {
+func (o *orderServiceImpl) UpdateStatus(ctx context.Context, id int, status order.Status) *helper.AppError {
 	_, err := o.orderRepository.FindById(ctx, id)
 	if err != nil {
 		if errors.Is(err, helper.ErrOrderNotFound) {
@@ -224,8 +223,8 @@ func (o *orderServiceImpl) UpdateOrderStatus(ctx context.Context, id int, status
 	return nil
 }
 
-func (o *orderServiceImpl) CancelOrder(ctx context.Context, id int) *helper.AppError {
-	orderEntity, err := o.orderRepository.FindById(ctx, id)
+func (o *orderServiceImpl) Cancel(ctx context.Context, id int) *helper.AppError {
+	orderData, err := o.orderRepository.FindById(ctx, id)
 	if err != nil {
 		if errors.Is(err, helper.ErrOrderNotFound) {
 			return helper.NewAppError(
@@ -242,7 +241,7 @@ func (o *orderServiceImpl) CancelOrder(ctx context.Context, id int) *helper.AppE
 		)
 	}
 
-	if orderEntity.Status != order.StatusPending {
+	if orderData.Status != order.StatusPending {
 		return helper.NewAppError(
 			http.StatusConflict,
 			"Order Cannot Be Cancelled",
@@ -250,7 +249,7 @@ func (o *orderServiceImpl) CancelOrder(ctx context.Context, id int) *helper.AppE
 		)
 	}
 
-	if err := o.orderRepository.UpdateStatus(ctx, orderEntity.ID, orderEntity.Status); err != nil {
+	if err := o.orderRepository.UpdateStatus(ctx, orderData.ID, orderData.Status); err != nil {
 		if errors.Is(err, helper.ErrOrderNotFound) {
 			return helper.NewAppError(
 				http.StatusNotFound,

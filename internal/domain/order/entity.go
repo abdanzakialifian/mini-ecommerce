@@ -8,20 +8,20 @@ const (
 	StatusCancelled Status = "cancelled"
 )
 
-type Order struct {
+type Data struct {
 	ID         int
 	UserID     int
 	TotalPrice float64
 	Status     Status
 }
 
-type UpdateOrder struct {
+type Update struct {
 	ID         int
 	TotalPrice *float64
 	Status     *Status
 }
 
-type OrderItem struct {
+type Item struct {
 	ID        int
 	OrderID   int
 	ProductID string
@@ -29,12 +29,12 @@ type OrderItem struct {
 	Quantity  int
 }
 
-type OrderDetail struct {
-	Order Order
-	Items []OrderItem
+type Detail struct {
+	Data  Data
+	Items []Item
 }
 
-type CreateOrderItem struct {
+type NewItem struct {
 	ProductID string
 	Quantity  int
 }
