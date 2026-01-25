@@ -11,15 +11,15 @@ import (
 )
 
 type userServiceImpl struct {
-	repository user.UserRepository
+	userRepository user.Repository
 }
 
-func NewUserServiceImpl(repository user.UserRepository) user.UserService {
-	return &userServiceImpl{repository: repository}
+func NewUser(userRepository user.Repository) user.Service {
+	return &userServiceImpl{userRepository: userRepository}
 }
 
-func (u *userServiceImpl) CreateUser(ctx context.Context, user *user.User) *helper.AppError {
-	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+func (u *userServiceImpl) Create(ctx context.Context, data *user.Data) *helper.AppError {
+	hash, err := bcrypt.GenerateFromPassword([]byte(data.Password), bcrypt.DefaultCost)
 
 	if err != nil {
 		return helper.NewAppError(
@@ -29,9 +29,9 @@ func (u *userServiceImpl) CreateUser(ctx context.Context, user *user.User) *help
 		)
 	}
 
-	user.Password = string(hash)
+	data.Password = string(hash)
 
-	err = u.repository.Create(ctx, user)
+	err = u.userRepository.Create(ctx, data)
 
 	if err != nil {
 		if errors.Is(err, helper.ErrUserAlreadyExists) {
@@ -52,30 +52,30 @@ func (u *userServiceImpl) CreateUser(ctx context.Context, user *user.User) *help
 	return nil
 }
 
-func (u *userServiceImpl) GetUserByEmail(ctx context.Context, login user.LoginUser) (user.User, string, *helper.AppError) {
-	result, accessToken, err := u.repository.FindByEmail(ctx, login)
+func (u *userServiceImpl) GetByEmail(ctx context.Context, login user.Login) (user.Data, string, *helper.AppError) {
+	userData, accessToken, err := u.userRepository.FindByEmail(ctx, login)
 	if err != nil {
 		if errors.Is(err, helper.ErrUserInvalid) {
-			return user.User{}, "", helper.NewAppError(
+			return user.Data{}, "", helper.NewAppError(
 				http.StatusBadRequest,
 				"Validation Failed",
 				err,
 			)
 		}
 
-		return user.User{}, "", helper.NewAppError(
+		return user.Data{}, "", helper.NewAppError(
 			http.StatusInternalServerError,
 			"Internal Server Error",
 			err,
 		)
 	}
 
-	return result, accessToken, nil
+	return userData, accessToken, nil
 }
 
-func (u *userServiceImpl) UpdateUser(ctx context.Context, updateUser *user.UpdateUser) *helper.AppError {
-	if updateUser.OldPassword != nil || updateUser.NewPassword != nil {
-		if updateUser.OldPassword == nil || updateUser.NewPassword == nil {
+func (u *userServiceImpl) Update(ctx context.Context, update *user.Update) *helper.AppError {
+	if update.OldPassword != nil || update.NewPassword != nil {
+		if update.OldPassword == nil || update.NewPassword == nil {
 			return helper.NewAppError(
 				http.StatusBadRequest,
 				"Invalid Request",
@@ -83,7 +83,7 @@ func (u *userServiceImpl) UpdateUser(ctx context.Context, updateUser *user.Updat
 			)
 		}
 
-		result, err := u.repository.FindById(ctx, updateUser.ID)
+		userData, err := u.userRepository.FindById(ctx, update.ID)
 		if err != nil {
 			if errors.Is(err, helper.ErrUserNotFound) {
 				return helper.NewAppError(
@@ -100,7 +100,7 @@ func (u *userServiceImpl) UpdateUser(ctx context.Context, updateUser *user.Updat
 			)
 		}
 
-		if err := bcrypt.CompareHashAndPassword([]byte(result.Password), []byte(*updateUser.OldPassword)); err != nil {
+		if err := bcrypt.CompareHashAndPassword([]byte(userData.Password), []byte(*update.OldPassword)); err != nil {
 			return helper.NewAppError(
 				http.StatusBadRequest,
 				"Invalid Request",
@@ -108,7 +108,7 @@ func (u *userServiceImpl) UpdateUser(ctx context.Context, updateUser *user.Updat
 			)
 		}
 
-		hash, err := bcrypt.GenerateFromPassword([]byte(*updateUser.NewPassword), bcrypt.DefaultCost)
+		hash, err := bcrypt.GenerateFromPassword([]byte(*update.NewPassword), bcrypt.DefaultCost)
 
 		if err != nil {
 			return helper.NewAppError(
@@ -119,10 +119,10 @@ func (u *userServiceImpl) UpdateUser(ctx context.Context, updateUser *user.Updat
 		}
 
 		newPasswordHash := string(hash)
-		updateUser.NewPassword = &newPasswordHash
+		update.NewPassword = &newPasswordHash
 	}
 
-	err := u.repository.Update(ctx, updateUser)
+	err := u.userRepository.Update(ctx, update)
 	if err != nil {
 		if errors.Is(err, helper.ErrUserNotFound) {
 			return helper.NewAppError(
@@ -142,8 +142,8 @@ func (u *userServiceImpl) UpdateUser(ctx context.Context, updateUser *user.Updat
 	return nil
 }
 
-func (u *userServiceImpl) DeleteUser(ctx context.Context, id int) *helper.AppError {
-	err := u.repository.Delete(ctx, id)
+func (u *userServiceImpl) Delete(ctx context.Context, id int) *helper.AppError {
+	err := u.userRepository.Delete(ctx, id)
 	if err != nil {
 		if errors.Is(err, helper.ErrUserNotFound) {
 			return helper.NewAppError(

@@ -1,13 +1,13 @@
 package user
 
-type User struct {
+type Data struct {
 	ID       int
 	Name     string
 	Email    string
 	Password string
 }
 
-type UpdateUser struct {
+type Update struct {
 	ID          int
 	Name        *string
 	Email       *string
@@ -15,7 +15,7 @@ type UpdateUser struct {
 	NewPassword *string
 }
 
-type LoginUser struct {
+type Login struct {
 	Email    string
 	Password string
 }

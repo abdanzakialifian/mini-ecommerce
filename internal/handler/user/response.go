@@ -1,12 +1,12 @@
 package user
 
-type UserResponse struct {
+type Response struct {
 	ID    int    `json:"id"`
 	Name  string `json:"name"`
 	Email string `json:"email"`
 }
 
-type LoginUserResponse struct {
+type LoginResponse struct {
 	ID          int    `json:"id"`
 	Name        string `json:"name"`
 	Email       string `json:"email"`

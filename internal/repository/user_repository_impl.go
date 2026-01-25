@@ -16,19 +16,19 @@ type userRepositoryImpl struct {
 	db *pgxpool.Pool
 }
 
-func NewUserRepositoryImpl(db *pgxpool.Pool) user.UserRepository {
+func NewUser(db *pgxpool.Pool) user.Repository {
 	return &userRepositoryImpl{db: db}
 }
 
-func (u *userRepositoryImpl) Create(ctx context.Context, user *user.User) error {
+func (u *userRepositoryImpl) Create(ctx context.Context, data *user.Data) error {
 	query := "INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING id"
 	err := u.db.QueryRow(
 		ctx,
 		query,
-		user.Name,
-		user.Email,
-		user.Password,
-	).Scan(&user.ID)
+		data.Name,
+		data.Email,
+		data.Password,
+	).Scan(&data.ID)
 
 	if err != nil {
 		var pgErr *pgconn.PgError
@@ -41,77 +41,77 @@ func (u *userRepositoryImpl) Create(ctx context.Context, user *user.User) error 
 	return nil
 }
 
-func (u *userRepositoryImpl) FindByEmail(ctx context.Context, login user.LoginUser) (user.User, string, error) {
+func (u *userRepositoryImpl) FindByEmail(ctx context.Context, login user.Login) (user.Data, string, error) {
 	query := "SELECT id, name, email, password FROM users WHERE email = $1"
-	var result user.User
+	var userData user.Data
 	err := u.db.QueryRow(
 		ctx,
 		query,
 		login.Email,
 	).Scan(
-		&result.ID,
-		&result.Name,
-		&result.Email,
-		&result.Password,
+		&userData.ID,
+		&userData.Name,
+		&userData.Email,
+		&userData.Password,
 	)
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return user.User{}, "", helper.ErrUserInvalid
+			return user.Data{}, "", helper.ErrUserInvalid
 		}
-		return user.User{}, "", err
+		return user.Data{}, "", err
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(result.Password), []byte(login.Password)); err != nil {
-		return user.User{}, "", helper.ErrUserInvalid
+	if err := bcrypt.CompareHashAndPassword([]byte(userData.Password), []byte(login.Password)); err != nil {
+		return user.Data{}, "", helper.ErrUserInvalid
 	}
 
-	accessToken, err := helper.GenerateAccessToken(result.ID, result.Name, result.Email)
+	accessToken, err := helper.GenerateAccessToken(userData.ID, userData.Name, userData.Email)
 
 	if err != nil {
-		return user.User{}, "", err
+		return user.Data{}, "", err
 	}
 
-	return result, accessToken, nil
+	return userData, accessToken, nil
 }
 
-func (u *userRepositoryImpl) FindById(ctx context.Context, id int) (user.User, error) {
+func (u *userRepositoryImpl) FindById(ctx context.Context, id int) (user.Data, error) {
 	query := "SELECT id, name, email, password FROM users WHERE id = $1"
-	var result user.User
+	var userData user.Data
 	err := u.db.QueryRow(
 		ctx,
 		query,
 		id,
 	).Scan(
-		&result.ID,
-		&result.Name,
-		&result.Email,
-		&result.Password,
+		&userData.ID,
+		&userData.Name,
+		&userData.Email,
+		&userData.Password,
 	)
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return user.User{}, helper.ErrUserNotFound
+			return user.Data{}, helper.ErrUserNotFound
 		}
-		return user.User{}, err
+		return user.Data{}, err
 	}
 
-	return result, nil
+	return userData, nil
 }
 
-func (u *userRepositoryImpl) Update(ctx context.Context, updateUser *user.UpdateUser) error {
+func (u *userRepositoryImpl) Update(ctx context.Context, update *user.Update) error {
 	query := "UPDATE users SET name = COALESCE($1, name), email = COALESCE($2, email), password = COALESCE($3, password) WHERE id = $4 RETURNING id, name, email"
 	err := u.db.QueryRow(
 		ctx,
 		query,
-		updateUser.Name,
-		updateUser.Email,
-		updateUser.NewPassword,
-		updateUser.ID,
+		update.Name,
+		update.Email,
+		update.NewPassword,
+		update.ID,
 	).Scan(
-		&updateUser.ID,
-		&updateUser.Name,
-		&updateUser.Email,
+		&update.ID,
+		&update.Name,
+		&update.Email,
 	)
 
 	if err != nil {

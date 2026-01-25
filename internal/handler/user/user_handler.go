@@ -10,15 +10,15 @@ import (
 )
 
 type UserHandler struct {
-	service user.UserService
+	userService user.Service
 }
 
-func NewHandler(service user.UserService) *UserHandler {
-	return &UserHandler{service: service}
+func NewHandler(userService user.Service) *UserHandler {
+	return &UserHandler{userService: userService}
 }
 
-func (h *UserHandler) CreateUser(c *gin.Context) {
-	var req CreateUserRequest
+func (h *UserHandler) Create(c *gin.Context) {
+	var req CreateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.Error(helper.NewAppError(
 			http.StatusBadRequest,
@@ -28,32 +28,29 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 		return
 	}
 
-	user := user.User{
+	userData := user.Data{
 		Name:     req.Name,
 		Email:    req.Email,
 		Password: req.Password,
 	}
-
-	if appErr := h.service.CreateUser(c.Request.Context(), &user); appErr != nil {
+	if appErr := h.userService.Create(c.Request.Context(), &userData); appErr != nil {
 		c.Error(appErr)
 		return
 	}
 
-	dataResponse := UserResponse{
-		ID:    user.ID,
-		Name:  user.Name,
-		Email: user.Email,
-	}
-
 	status, res := response.Success(
 		"Success Create User",
-		dataResponse,
+		Response{
+			ID:    userData.ID,
+			Name:  userData.Name,
+			Email: userData.Email,
+		},
 	)
 	c.JSON(status, res)
 }
 
-func (h *UserHandler) GetUserByEmail(c *gin.Context) {
-	var req LoginUserRequest
+func (h *UserHandler) GetByEmail(c *gin.Context) {
+	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.Error(helper.NewAppError(
 			http.StatusBadRequest,
@@ -63,35 +60,32 @@ func (h *UserHandler) GetUserByEmail(c *gin.Context) {
 		return
 	}
 
-	loginUser := user.LoginUser{
+	login := user.Login{
 		Email:    req.Email,
 		Password: req.Password,
 	}
-
-	result, accessToken, appErr := h.service.GetUserByEmail(c.Request.Context(), loginUser)
+	result, accessToken, appErr := h.userService.GetByEmail(c.Request.Context(), login)
 	if appErr != nil {
 		c.Error(appErr)
 		return
 	}
 
-	dataResponse := LoginUserResponse{
-		ID:          result.ID,
-		Name:        result.Name,
-		Email:       result.Email,
-		AccessToken: accessToken,
-	}
-
 	status, res := response.Success(
 		"Success Get User",
-		dataResponse,
+		LoginResponse{
+			ID:          result.ID,
+			Name:        result.Name,
+			Email:       result.Email,
+			AccessToken: accessToken,
+		},
 	)
 	c.JSON(status, res)
 }
 
-func (h *UserHandler) UpdateUser(c *gin.Context) {
+func (h *UserHandler) Update(c *gin.Context) {
 	userId := c.MustGet("user_id").(int)
 
-	var req UpdateUserRequest
+	var req UpdateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.Error(helper.NewAppError(
 			http.StatusBadRequest,
@@ -101,36 +95,33 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	updateUser := user.UpdateUser{
+	userUpdate := user.Update{
 		ID:          userId,
 		Name:        req.Name,
 		Email:       req.Email,
 		OldPassword: req.OldPassword,
 		NewPassword: req.NewPassword,
 	}
-
-	if appErr := h.service.UpdateUser(c.Request.Context(), &updateUser); appErr != nil {
+	if appErr := h.userService.Update(c.Request.Context(), &userUpdate); appErr != nil {
 		c.Error(appErr)
 		return
 	}
 
-	dataResponse := UserResponse{
-		ID:    updateUser.ID,
-		Name:  *updateUser.Name,
-		Email: *updateUser.Email,
-	}
-
 	status, res := response.Success(
 		"Success Update User",
-		dataResponse,
+		Response{
+			ID:    userUpdate.ID,
+			Name:  *userUpdate.Name,
+			Email: *userUpdate.Email,
+		},
 	)
 	c.JSON(status, res)
 }
 
-func (h *UserHandler) DeleteUser(c *gin.Context) {
+func (h *UserHandler) Delete(c *gin.Context) {
 	userId := c.MustGet("user_id").(int)
 
-	if appErr := h.service.DeleteUser(c.Request.Context(), userId); appErr != nil {
+	if appErr := h.userService.Delete(c.Request.Context(), userId); appErr != nil {
 		c.Error(appErr)
 		return
 	}

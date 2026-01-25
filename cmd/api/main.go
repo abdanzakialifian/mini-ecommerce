@@ -41,8 +41,8 @@ func main() {
 	categoryService := service.NewCategory(categoryRepository)
 	categoryHandler := category.NewHandler(categoryService)
 
-	userRepository := repository.NewUserRepositoryImpl(db)
-	userService := service.NewUserServiceImpl(userRepository)
+	userRepository := repository.NewUser(db)
+	userService := service.NewUser(userRepository)
 	userHandler := user.NewHandler(userService)
 
 	cartRepository := repository.NewCart(tx)
@@ -59,8 +59,8 @@ func main() {
 	)
 
 	// ======================== without token ========================
-	r.POST("/users", userHandler.CreateUser)
-	r.GET("/users", userHandler.GetUserByEmail)
+	r.POST("/users", userHandler.Create)
+	r.GET("/users", userHandler.GetByEmail)
 
 	// ======================== with token ========================
 	api := r.Group("/api")
@@ -78,8 +78,8 @@ func main() {
 	api.PUT("/categories", categoryHandler.Update)
 	api.DELETE("/categories/:id", categoryHandler.Delete)
 
-	api.PUT("/users", userHandler.UpdateUser)
-	api.DELETE("/users", userHandler.DeleteUser)
+	api.PUT("/users", userHandler.Update)
+	api.DELETE("/users", userHandler.Delete)
 
 	api.POST("/carts", cartHandler.AddItem)
 	api.GET("/carts", cartHandler.GetItems)
