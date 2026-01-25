@@ -12,17 +12,17 @@ import (
 )
 
 type CartHandler struct {
-	service cart.CartService
+	cartService cart.Service
 }
 
-func NewHandler(service cart.CartService) *CartHandler {
-	return &CartHandler{service: service}
+func NewHandler(cartService cart.Service) *CartHandler {
+	return &CartHandler{cartService: cartService}
 }
 
-func (h *CartHandler) AddCartItemToCart(c *gin.Context) {
+func (h *CartHandler) AddItem(c *gin.Context) {
 	userId := c.MustGet("user_id").(int)
 
-	var req AddCartItemRequest
+	var req AddItemRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.Error(helper.NewAppError(
 			http.StatusBadRequest,
@@ -32,57 +32,55 @@ func (h *CartHandler) AddCartItemToCart(c *gin.Context) {
 		return
 	}
 
-	result, appErr := h.service.AddCartItemToCart(c.Request.Context(), userId, req.ProductId, req.Quantity)
+	cartItem, appErr := h.cartService.AddItem(c.Request.Context(), userId, req.ProductId, req.Quantity)
 	if appErr != nil {
 		c.Error(appErr)
 		return
-	}
-
-	dataResponse := CartItemResponse{
-		ID:        result.ID,
-		CartID:    result.CartID,
-		ProductID: result.ProductID,
-		Quantity:  result.Quantity,
 	}
 
 	status, res := response.Success(
 		"Success Add Cart Item",
-		dataResponse,
+		ItemResponse{
+			ID:        cartItem.ID,
+			CartID:    cartItem.CartID,
+			ProductID: cartItem.ProductID,
+			Quantity:  cartItem.Quantity,
+		},
 	)
 	c.JSON(status, res)
 }
 
-func (h *CartHandler) GetCartItems(c *gin.Context) {
+func (h *CartHandler) GetItems(c *gin.Context) {
 	userId := c.MustGet("user_id").(int)
 
-	results, appErr := h.service.GetCartItems(c.Request.Context(), userId)
+	cartItems, appErr := h.cartService.GetItems(c.Request.Context(), userId)
 	if appErr != nil {
 		c.Error(appErr)
 		return
 	}
 
-	var dataResponses []CartItemResponse
-	for _, cartItem := range results {
-		response := CartItemResponse{
+	var itemResponses []ItemResponse
+	for _, cartItem := range cartItems {
+		itemResponse := ItemResponse{
 			ID:        cartItem.ID,
 			CartID:    cartItem.CartID,
 			ProductID: cartItem.ProductID,
 			Quantity:  cartItem.Quantity,
 		}
-		dataResponses = append(dataResponses, response)
+		itemResponses = append(itemResponses, itemResponse)
 	}
 
 	status, res := response.Success(
 		"Success Get Cart Items",
-		dataResponses,
+		itemResponses,
 	)
 	c.JSON(status, res)
 }
 
-func (h *CartHandler) UpdateCartItemQuantity(c *gin.Context) {
+func (h *CartHandler) UpdateItemQuantity(c *gin.Context) {
 	userId := c.MustGet("user_id").(int)
 
-	var req UpdateCartItemRequest
+	var req UpdateItemRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.Error(helper.NewAppError(
 			http.StatusBadRequest,
@@ -92,11 +90,11 @@ func (h *CartHandler) UpdateCartItemQuantity(c *gin.Context) {
 		return
 	}
 
-	updateCartItem := cart.UpdateCartItem{
+	updateItem := cart.UpdateItem{
 		ID:       req.CartItemId,
 		Quantity: req.Quantity,
 	}
-	if appErr := h.service.UpdateCartItemQuantity(c.Request.Context(), userId, updateCartItem); appErr != nil {
+	if appErr := h.cartService.UpdateItemQuantity(c.Request.Context(), userId, updateItem); appErr != nil {
 		c.Error(appErr)
 		return
 	}
@@ -105,7 +103,7 @@ func (h *CartHandler) UpdateCartItemQuantity(c *gin.Context) {
 	c.JSON(status, res)
 }
 
-func (h *CartHandler) DeleteCartItemFromCart(c *gin.Context) {
+func (h *CartHandler) DeleteItem(c *gin.Context) {
 	userId := c.MustGet("user_id").(int)
 
 	id := c.Param("cart_item_id")
@@ -128,7 +126,7 @@ func (h *CartHandler) DeleteCartItemFromCart(c *gin.Context) {
 		return
 	}
 
-	if appErr := h.service.DeleteCartItemFromCart(c.Request.Context(), userId, cartItemId); appErr != nil {
+	if appErr := h.cartService.DeleteItem(c.Request.Context(), userId, cartItemId); appErr != nil {
 		c.Error(appErr)
 		return
 	}

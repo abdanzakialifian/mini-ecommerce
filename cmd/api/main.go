@@ -45,8 +45,8 @@ func main() {
 	userService := service.NewUserServiceImpl(userRepository)
 	userHandler := user.NewHandler(userService)
 
-	cartRepository := repository.NewCartRepositoryImpl(tx)
-	cartItemRepository := repository.NewCartItemRepositoryImpl(tx)
+	cartRepository := repository.NewCart(tx)
+	cartItemRepository := repository.NewCartItem(tx)
 	cartService := service.NewCartServiceImpl(tx, cartRepository, cartItemRepository)
 	cartHandler := cart.NewHandler(cartService)
 
@@ -81,10 +81,10 @@ func main() {
 	api.PUT("/users", userHandler.UpdateUser)
 	api.DELETE("/users", userHandler.DeleteUser)
 
-	api.POST("/carts", cartHandler.AddCartItemToCart)
-	api.GET("/carts", cartHandler.GetCartItems)
-	api.PUT("/carts", cartHandler.UpdateCartItemQuantity)
-	api.DELETE("/carts/:cart_item_id", cartHandler.DeleteCartItemFromCart)
+	api.POST("/carts", cartHandler.AddItem)
+	api.GET("/carts", cartHandler.GetItems)
+	api.PUT("/carts", cartHandler.UpdateItemQuantity)
+	api.DELETE("/carts/:cart_item_id", cartHandler.DeleteItem)
 
 	if err := r.Run(":8080"); err != nil {
 		log.Fatalf("Server failed : %v", err)

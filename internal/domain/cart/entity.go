@@ -1,18 +1,18 @@
 package cart
 
-type Cart struct {
+type Data struct {
 	ID     int
 	UserID int
 }
 
-type CartItem struct {
+type Item struct {
 	ID        int
 	CartID    int
 	ProductID string
 	Quantity  int
 }
 
-type UpdateCartItem struct {
+type UpdateItem struct {
 	ID       int
 	Quantity int
 }

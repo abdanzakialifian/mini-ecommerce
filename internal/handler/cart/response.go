@@ -1,6 +1,6 @@
 package cart
 
-type CartItemResponse struct {
+type ItemResponse struct {
 	ID        int    `json:"id"`
 	CartID    int    `json:"cart_id"`
 	ProductID string `json:"product_id"`

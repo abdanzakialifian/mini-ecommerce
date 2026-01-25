@@ -10,24 +10,24 @@ import (
 
 type cartServiceImpl struct {
 	tx                 *helper.Transaction
-	cartRepository     cart.CartRepository
-	cartItemRepository cart.CartItemRepository
+	cartRepository     cart.Repository
+	cartItemRepository cart.ItemRepository
 }
 
-func NewCartServiceImpl(tx *helper.Transaction, cartRepository cart.CartRepository, cartItemRepository cart.CartItemRepository) cart.CartService {
+func NewCartServiceImpl(tx *helper.Transaction, cartRepository cart.Repository, cartItemRepository cart.ItemRepository) cart.Service {
 	return &cartServiceImpl{tx: tx, cartRepository: cartRepository, cartItemRepository: cartItemRepository}
 }
 
-func (c *cartServiceImpl) GetCartItems(ctx context.Context, userId int) ([]cart.CartItem, *helper.AppError) {
-	var results []cart.CartItem
+func (c *cartServiceImpl) GetItems(ctx context.Context, userId int) ([]cart.Item, *helper.AppError) {
+	var cartItems []cart.Item
 
 	err := func() error {
-		cart, err := c.cartRepository.FindByUserId(ctx, userId)
+		cartData, err := c.cartRepository.FindByUserId(ctx, userId)
 		if err != nil {
 			return err
 		}
 
-		results, err = c.cartItemRepository.FindAllByCartId(ctx, cart.ID)
+		cartItems, err = c.cartItemRepository.FindAllByCartId(ctx, cartData.ID)
 		if err != nil {
 			return err
 		}
@@ -46,19 +46,19 @@ func (c *cartServiceImpl) GetCartItems(ctx context.Context, userId int) ([]cart.
 		)
 	}
 
-	return results, nil
+	return cartItems, nil
 }
 
-func (c *cartServiceImpl) AddCartItemToCart(ctx context.Context, userId int, productId string, quantity int) (cart.CartItem, *helper.AppError) {
-	var result *cart.CartItem
+func (c *cartServiceImpl) AddItem(ctx context.Context, userId int, productId string, quantity int) (cart.Item, *helper.AppError) {
+	var result *cart.Item
 
 	err := c.tx.ExecTx(ctx, func(ctx context.Context) error {
-		userCart, err := c.cartRepository.FindOrCreateByUserId(ctx, userId)
+		cartData, err := c.cartRepository.FindOrCreateByUserId(ctx, userId)
 		if err != nil {
 			return err
 		}
 
-		cartItem, err := c.cartItemRepository.FindByCartAndProductId(ctx, userCart.ID, productId)
+		cartItem, err := c.cartItemRepository.FindByCartAndProductId(ctx, cartData.ID, productId)
 		if err != nil {
 			return err
 		}
@@ -66,7 +66,7 @@ func (c *cartServiceImpl) AddCartItemToCart(ctx context.Context, userId int, pro
 		if cartItem != nil {
 			cartItem.Quantity += quantity
 
-			updateCartItem := cart.UpdateCartItem{
+			updateCartItem := cart.UpdateItem{
 				ID:       cartItem.ID,
 				Quantity: cartItem.Quantity,
 			}
@@ -81,8 +81,8 @@ func (c *cartServiceImpl) AddCartItemToCart(ctx context.Context, userId int, pro
 			return nil
 		}
 
-		result = &cart.CartItem{
-			CartID:    userCart.ID,
+		result = &cart.Item{
+			CartID:    cartData.ID,
 			ProductID: productId,
 			Quantity:  quantity,
 		}
@@ -96,14 +96,14 @@ func (c *cartServiceImpl) AddCartItemToCart(ctx context.Context, userId int, pro
 
 	if err != nil {
 		if errors.Is(err, helper.ErrCartItemNotFound) {
-			return cart.CartItem{}, helper.NewAppError(
+			return cart.Item{}, helper.NewAppError(
 				http.StatusNotFound,
 				"Cart Item Not Found",
 				err,
 			)
 		}
 
-		return cart.CartItem{}, helper.NewAppError(
+		return cart.Item{}, helper.NewAppError(
 			http.StatusInternalServerError,
 			"Internal Server Error",
 			err,
@@ -113,24 +113,24 @@ func (c *cartServiceImpl) AddCartItemToCart(ctx context.Context, userId int, pro
 	return *result, nil
 }
 
-func (c *cartServiceImpl) UpdateCartItemQuantity(ctx context.Context, userId int, updateCartItem cart.UpdateCartItem) *helper.AppError {
+func (c *cartServiceImpl) UpdateItemQuantity(ctx context.Context, userId int, updateItem cart.UpdateItem) *helper.AppError {
 	err := func() error {
-		cartItem, err := c.cartItemRepository.FindById(ctx, updateCartItem.ID)
+		cartItem, err := c.cartItemRepository.FindById(ctx, updateItem.ID)
 		if err != nil {
 			return err
 		}
 
-		cart, err := c.cartRepository.FindByUserId(ctx, userId)
+		cartData, err := c.cartRepository.FindByUserId(ctx, userId)
 		if err != nil {
 			return err
 		}
 
-		if cartItem.CartID != cart.ID {
+		if cartItem.CartID != cartData.ID {
 			return helper.ErrCartItemNotFound
 		}
 
-		updateCartItem.Quantity += cartItem.Quantity
-		err = c.cartItemRepository.Update(ctx, updateCartItem)
+		updateItem.Quantity += cartItem.Quantity
+		err = c.cartItemRepository.Update(ctx, updateItem)
 		if err != nil {
 			return err
 		}
@@ -156,23 +156,23 @@ func (c *cartServiceImpl) UpdateCartItemQuantity(ctx context.Context, userId int
 	return nil
 }
 
-func (c *cartServiceImpl) DeleteCartItemFromCart(ctx context.Context, userId int, cartItemId int) *helper.AppError {
+func (c *cartServiceImpl) DeleteItem(ctx context.Context, userId int, itemId int) *helper.AppError {
 	err := func() error {
-		cartItem, err := c.cartItemRepository.FindById(ctx, cartItemId)
+		cartItem, err := c.cartItemRepository.FindById(ctx, itemId)
 		if err != nil {
 			return err
 		}
 
-		cart, err := c.cartRepository.FindByUserId(ctx, userId)
+		cartData, err := c.cartRepository.FindByUserId(ctx, userId)
 		if err != nil {
 			return err
 		}
 
-		if cartItem.CartID != cart.ID {
+		if cartItem.CartID != cartData.ID {
 			return helper.ErrCartItemNotFound
 		}
 
-		err = c.cartItemRepository.Delete(ctx, cartItemId)
+		err = c.cartItemRepository.Delete(ctx, itemId)
 		if err != nil {
 			return err
 		}

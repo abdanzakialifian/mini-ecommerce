@@ -5,9 +5,9 @@ import (
 	"mini-ecommerce/internal/helper"
 )
 
-type CartService interface {
-	GetCartItems(ctx context.Context, userId int) ([]CartItem, *helper.AppError)
-	AddCartItemToCart(ctx context.Context, userId int, productId string, quantity int) (CartItem, *helper.AppError)
-	UpdateCartItemQuantity(ctx context.Context, userId int, updateCartItem UpdateCartItem) *helper.AppError
-	DeleteCartItemFromCart(ctx context.Context, userId int, cartItemId int) *helper.AppError
+type Service interface {
+	GetItems(ctx context.Context, userId int) ([]Item, *helper.AppError)
+	AddItem(ctx context.Context, userId int, productId string, quantity int) (Item, *helper.AppError)
+	UpdateItemQuantity(ctx context.Context, userId int, updateItem UpdateItem) *helper.AppError
+	DeleteItem(ctx context.Context, userId int, itemId int) *helper.AppError
 }

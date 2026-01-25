@@ -9,5 +9,6 @@ type ProductRepository interface {
 	Find(ctx context.Context, id string) (Product, error)
 	FindAll(ctx context.Context) ([]Product, error)
 	Update(ctx context.Context, updateProduct *UpdateProduct) error
+	UpdateStock(ctx context.Context, id string, quantity int) error
 	Delete(ctx context.Context, id string) error
 }
