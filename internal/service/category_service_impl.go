@@ -9,15 +9,15 @@ import (
 )
 
 type categoryServiceImpl struct {
-	repository category.CategoryRepository
+	categoryRepository category.Repository
 }
 
-func NewCategoryServiceImpl(repository category.CategoryRepository) category.CategoryService {
-	return &categoryServiceImpl{repository: repository}
+func NewCategory(categoryRepository category.Repository) category.Service {
+	return &categoryServiceImpl{categoryRepository: categoryRepository}
 }
 
-func (c *categoryServiceImpl) CreateCategory(ctx context.Context, category *category.Category) *helper.AppError {
-	err := c.repository.Create(ctx, category)
+func (c *categoryServiceImpl) Create(ctx context.Context, data *category.Data) *helper.AppError {
+	err := c.categoryRepository.Create(ctx, data)
 	if err != nil {
 		if errors.Is(err, helper.ErrCategoryAlreadyExists) {
 			return helper.NewAppError(
@@ -37,29 +37,29 @@ func (c *categoryServiceImpl) CreateCategory(ctx context.Context, category *cate
 	return nil
 }
 
-func (c *categoryServiceImpl) GetCategory(ctx context.Context, id string) (category.Category, *helper.AppError) {
-	result, err := c.repository.Find(ctx, id)
+func (c *categoryServiceImpl) Get(ctx context.Context, id string) (category.Data, *helper.AppError) {
+	categoryData, err := c.categoryRepository.Find(ctx, id)
 	if err != nil {
 		if errors.Is(err, helper.ErrCategoryNotFound) {
-			return category.Category{}, helper.NewAppError(
+			return category.Data{}, helper.NewAppError(
 				http.StatusNotFound,
 				"Product Not Found",
 				err,
 			)
 		}
 
-		return category.Category{}, helper.NewAppError(
+		return category.Data{}, helper.NewAppError(
 			http.StatusInternalServerError,
 			"Internal Server Error",
 			err,
 		)
 	}
 
-	return result, nil
+	return categoryData, nil
 }
 
-func (c *categoryServiceImpl) GetCategories(ctx context.Context) ([]category.Category, *helper.AppError) {
-	results, err := c.repository.FindAll(ctx)
+func (c *categoryServiceImpl) GetAll(ctx context.Context) ([]category.Data, *helper.AppError) {
+	categories, err := c.categoryRepository.FindAll(ctx)
 	if err != nil {
 		return nil, helper.NewAppError(
 			http.StatusInternalServerError,
@@ -68,11 +68,11 @@ func (c *categoryServiceImpl) GetCategories(ctx context.Context) ([]category.Cat
 		)
 	}
 
-	return results, nil
+	return categories, nil
 }
 
-func (c *categoryServiceImpl) UpdateCategory(ctx context.Context, updateCategory *category.UpdateCategory) *helper.AppError {
-	err := c.repository.Update(ctx, updateCategory)
+func (c *categoryServiceImpl) Update(ctx context.Context, update *category.Update) *helper.AppError {
+	err := c.categoryRepository.Update(ctx, update)
 	if err != nil {
 		if errors.Is(err, helper.ErrCategoryNotFound) {
 			return helper.NewAppError(
@@ -92,8 +92,8 @@ func (c *categoryServiceImpl) UpdateCategory(ctx context.Context, updateCategory
 	return nil
 }
 
-func (c *categoryServiceImpl) DeleteCategory(ctx context.Context, id string) *helper.AppError {
-	err := c.repository.Delete(ctx, id)
+func (c *categoryServiceImpl) Delete(ctx context.Context, id string) *helper.AppError {
+	err := c.categoryRepository.Delete(ctx, id)
 	if err != nil {
 		if errors.Is(err, helper.ErrCategoryNotFound) {
 			return helper.NewAppError(

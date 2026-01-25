@@ -11,15 +11,15 @@ import (
 )
 
 type CategoryHandler struct {
-	service category.CategoryService
+	categoryService category.Service
 }
 
-func NewHandler(service category.CategoryService) *CategoryHandler {
-	return &CategoryHandler{service: service}
+func NewHandler(categoryService category.Service) *CategoryHandler {
+	return &CategoryHandler{categoryService: categoryService}
 }
 
-func (h *CategoryHandler) CreateCategory(c *gin.Context) {
-	var req CreateCategoryRequest
+func (h *CategoryHandler) Create(c *gin.Context) {
+	var req CreateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.Error(helper.NewAppError(
 			http.StatusBadRequest,
@@ -29,26 +29,23 @@ func (h *CategoryHandler) CreateCategory(c *gin.Context) {
 		return
 	}
 
-	category := category.Category{Name: req.Name}
-
-	if appErr := h.service.CreateCategory(c.Request.Context(), &category); appErr != nil {
+	categoryData := category.Data{Name: req.Name}
+	if appErr := h.categoryService.Create(c.Request.Context(), &categoryData); appErr != nil {
 		c.Error(appErr)
 		return
-	}
-
-	dataResponse := CategoryResponse{
-		ID:   category.ID,
-		Name: category.Name,
 	}
 
 	status, res := response.Success(
 		"Success Create Category",
-		dataResponse,
+		Response{
+			ID:   categoryData.ID,
+			Name: categoryData.Name,
+		},
 	)
 	c.JSON(status, res)
 }
 
-func (h *CategoryHandler) GetCategory(c *gin.Context) {
+func (h *CategoryHandler) Get(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
 		c.Error(helper.NewAppError(
@@ -59,49 +56,47 @@ func (h *CategoryHandler) GetCategory(c *gin.Context) {
 		return
 	}
 
-	result, appErr := h.service.GetCategory(c.Request.Context(), id)
+	categoryData, appErr := h.categoryService.Get(c.Request.Context(), id)
 	if appErr != nil {
 		c.Error(appErr)
 		return
-	}
-
-	dataResponse := CategoryResponse{
-		ID:   result.ID,
-		Name: result.Name,
 	}
 
 	status, res := response.Success(
 		"Success Get Category",
-		dataResponse,
+		Response{
+			ID:   categoryData.ID,
+			Name: categoryData.Name,
+		},
 	)
 	c.JSON(status, res)
 }
 
-func (h *CategoryHandler) GetCategories(c *gin.Context) {
-	results, appErr := h.service.GetCategories(c.Request.Context())
+func (h *CategoryHandler) GetAll(c *gin.Context) {
+	categories, appErr := h.categoryService.GetAll(c.Request.Context())
 	if appErr != nil {
 		c.Error(appErr)
 		return
 	}
 
-	var dataResponses []CategoryResponse
-	for _, category := range results {
-		response := CategoryResponse{
+	var categoryResponses []Response
+	for _, category := range categories {
+		response := Response{
 			ID:   category.ID,
 			Name: category.Name,
 		}
-		dataResponses = append(dataResponses, response)
+		categoryResponses = append(categoryResponses, response)
 	}
 
 	status, res := response.Success(
 		"Success Get Categories",
-		dataResponses,
+		categoryResponses,
 	)
 	c.JSON(status, res)
 }
 
-func (h *CategoryHandler) UpdateCategory(c *gin.Context) {
-	var req UpdateCategoryRequest
+func (h *CategoryHandler) Update(c *gin.Context) {
+	var req UpdateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.Error(helper.NewAppError(
 			http.StatusBadRequest,
@@ -111,29 +106,26 @@ func (h *CategoryHandler) UpdateCategory(c *gin.Context) {
 		return
 	}
 
-	updateCategory := category.UpdateCategory{
+	categoryUpdate := category.Update{
 		ID:   req.ID,
 		Name: req.Name,
 	}
-
-	if appErr := h.service.UpdateCategory(c.Request.Context(), &updateCategory); appErr != nil {
+	if appErr := h.categoryService.Update(c.Request.Context(), &categoryUpdate); appErr != nil {
 		c.Error(appErr)
 		return
 	}
 
-	dataResponse := CategoryResponse{
-		ID:   updateCategory.ID,
-		Name: updateCategory.Name,
-	}
-
 	status, res := response.Success(
 		"Success Update Category",
-		dataResponse,
+		Response{
+			ID:   categoryUpdate.ID,
+			Name: categoryUpdate.Name,
+		},
 	)
 	c.JSON(status, res)
 }
 
-func (h *CategoryHandler) DeleteCategory(c *gin.Context) {
+func (h *CategoryHandler) Delete(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
 		c.Error(helper.NewAppError(
@@ -144,7 +136,7 @@ func (h *CategoryHandler) DeleteCategory(c *gin.Context) {
 		return
 	}
 
-	if appErr := h.service.DeleteCategory(c.Request.Context(), id); appErr != nil {
+	if appErr := h.categoryService.Delete(c.Request.Context(), id); appErr != nil {
 		c.Error(appErr)
 		return
 	}

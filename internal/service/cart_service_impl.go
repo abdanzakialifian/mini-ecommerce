@@ -14,7 +14,7 @@ type cartServiceImpl struct {
 	cartItemRepository cart.ItemRepository
 }
 
-func NewCartServiceImpl(tx *helper.Transaction, cartRepository cart.Repository, cartItemRepository cart.ItemRepository) cart.Service {
+func NewCart(tx *helper.Transaction, cartRepository cart.Repository, cartItemRepository cart.ItemRepository) cart.Service {
 	return &cartServiceImpl{tx: tx, cartRepository: cartRepository, cartItemRepository: cartItemRepository}
 }
 

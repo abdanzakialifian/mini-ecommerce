@@ -1,11 +1,11 @@
 package category
 
-type Category struct {
+type Data struct {
 	ID   string
 	Name string
 }
 
-type UpdateCategory struct {
+type Update struct {
 	ID   string
 	Name string
 }

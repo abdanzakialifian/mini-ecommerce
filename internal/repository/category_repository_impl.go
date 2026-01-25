@@ -15,17 +15,17 @@ type categoryRepositoryImpl struct {
 	db *pgxpool.Pool
 }
 
-func NewCategoryRepositoryImpl(db *pgxpool.Pool) category.CategoryRepository {
+func NewCategory(db *pgxpool.Pool) category.Repository {
 	return &categoryRepositoryImpl{db: db}
 }
 
-func (c *categoryRepositoryImpl) Create(ctx context.Context, category *category.Category) error {
+func (c *categoryRepositoryImpl) Create(ctx context.Context, data *category.Data) error {
 	query := "INSERT INTO categories (name) VALUES ($1) RETURNING id"
 	err := c.db.QueryRow(
 		ctx,
 		query,
-		category.Name,
-	).Scan(&category.ID)
+		data.Name,
+	).Scan(&data.ID)
 
 	if err != nil {
 		var pgErr *pgconn.PgError
@@ -38,29 +38,29 @@ func (c *categoryRepositoryImpl) Create(ctx context.Context, category *category.
 	return nil
 }
 
-func (c *categoryRepositoryImpl) Find(ctx context.Context, id string) (category.Category, error) {
+func (c *categoryRepositoryImpl) Find(ctx context.Context, id string) (category.Data, error) {
 	query := "SELECT id, name FROM categories WHERE id = $1"
-	var result category.Category
+	var categoryData category.Data
 	err := c.db.QueryRow(
 		ctx,
 		query,
 		id,
 	).Scan(
-		&result.ID,
-		&result.Name,
+		&categoryData.ID,
+		&categoryData.Name,
 	)
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return category.Category{}, helper.ErrCategoryNotFound
+			return category.Data{}, helper.ErrCategoryNotFound
 		}
-		return category.Category{}, err
+		return category.Data{}, err
 	}
 
-	return result, nil
+	return categoryData, nil
 }
 
-func (c *categoryRepositoryImpl) FindAll(ctx context.Context) ([]category.Category, error) {
+func (c *categoryRepositoryImpl) FindAll(ctx context.Context) ([]category.Data, error) {
 	query := "SELECT id, name FROM categories"
 	rows, err := c.db.Query(ctx, query)
 	if err != nil {
@@ -68,36 +68,36 @@ func (c *categoryRepositoryImpl) FindAll(ctx context.Context) ([]category.Catego
 	}
 	defer rows.Close()
 
-	var results []category.Category
+	var categories []category.Data
 
 	for rows.Next() {
-		var category category.Category
+		var categoryData category.Data
 		if err := rows.Scan(
-			&category.ID,
-			&category.Name,
+			&categoryData.ID,
+			&categoryData.Name,
 		); err != nil {
 			return nil, err
 		}
-		results = append(results, category)
+		categories = append(categories, categoryData)
 	}
 
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 
-	return results, nil
+	return categories, nil
 }
 
-func (c *categoryRepositoryImpl) Update(ctx context.Context, updateCategory *category.UpdateCategory) error {
+func (c *categoryRepositoryImpl) Update(ctx context.Context, update *category.Update) error {
 	query := "UPDATE categories SET name = $1, updated_at = NOW() WHERE id = $2 RETURNING id, name"
 	err := c.db.QueryRow(
 		ctx,
 		query,
-		updateCategory.Name,
-		updateCategory.ID,
+		update.Name,
+		update.ID,
 	).Scan(
-		&updateCategory.ID,
-		&updateCategory.Name,
+		&update.ID,
+		&update.Name,
 	)
 
 	if err != nil {

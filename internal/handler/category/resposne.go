@@ -1,6 +1,6 @@
 package category
 
-type CategoryResponse struct {
+type Response struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
 }

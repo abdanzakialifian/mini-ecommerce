@@ -37,8 +37,8 @@ func main() {
 	productService := service.NewProductServiceImpl(productRepository)
 	productHandler := product.NewHandler(productService)
 
-	categoryRepository := repository.NewCategoryRepositoryImpl(db)
-	categoryService := service.NewCategoryServiceImpl(categoryRepository)
+	categoryRepository := repository.NewCategory(db)
+	categoryService := service.NewCategory(categoryRepository)
 	categoryHandler := category.NewHandler(categoryService)
 
 	userRepository := repository.NewUserRepositoryImpl(db)
@@ -47,7 +47,7 @@ func main() {
 
 	cartRepository := repository.NewCart(tx)
 	cartItemRepository := repository.NewCartItem(tx)
-	cartService := service.NewCartServiceImpl(tx, cartRepository, cartItemRepository)
+	cartService := service.NewCart(tx, cartRepository, cartItemRepository)
 	cartHandler := cart.NewHandler(cartService)
 
 	r := gin.New()
@@ -72,11 +72,11 @@ func main() {
 	api.PUT("/products", productHandler.UpdateProduct)
 	api.DELETE("/products/:id", productHandler.DeleteProduct)
 
-	api.POST("/categories", categoryHandler.CreateCategory)
-	api.GET("/categories/:id", categoryHandler.GetCategory)
-	api.GET("/categories", categoryHandler.GetCategories)
-	api.PUT("/categories", categoryHandler.UpdateCategory)
-	api.DELETE("/categories/:id", categoryHandler.DeleteCategory)
+	api.POST("/categories", categoryHandler.Create)
+	api.GET("/categories/:id", categoryHandler.Get)
+	api.GET("/categories", categoryHandler.GetAll)
+	api.PUT("/categories", categoryHandler.Update)
+	api.DELETE("/categories/:id", categoryHandler.Delete)
 
 	api.PUT("/users", userHandler.UpdateUser)
 	api.DELETE("/users", userHandler.DeleteUser)
