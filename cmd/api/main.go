@@ -33,8 +33,8 @@ func main() {
 
 	tx := helper.NewTransaction(db)
 
-	productRepository := repository.NewProductRepositoryImpl(db, tx)
-	productService := service.NewProductServiceImpl(productRepository)
+	productRepository := repository.NewProduct(db, tx)
+	productService := service.NewProduct(productRepository)
 	productHandler := product.NewHandler(productService)
 
 	categoryRepository := repository.NewCategory(db)
@@ -66,11 +66,11 @@ func main() {
 	api := r.Group("/api")
 	api.Use(middleware.JWTAuth())
 
-	api.POST("/products", productHandler.CreateProduct)
-	api.GET("/products/:id", productHandler.GetProduct)
-	api.GET("/products", productHandler.GetProducts)
-	api.PUT("/products", productHandler.UpdateProduct)
-	api.DELETE("/products/:id", productHandler.DeleteProduct)
+	api.POST("/products", productHandler.Create)
+	api.GET("/products/:id", productHandler.Get)
+	api.GET("/products", productHandler.GetAll)
+	api.PUT("/products", productHandler.Update)
+	api.DELETE("/products/:id", productHandler.Delete)
 
 	api.POST("/categories", categoryHandler.Create)
 	api.GET("/categories/:id", categoryHandler.Get)

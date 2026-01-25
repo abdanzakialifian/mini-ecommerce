@@ -1,6 +1,6 @@
 package product
 
-type CreateProductRequest struct {
+type CreateRequest struct {
 	CategoryID  string  `json:"category_id" binding:"required,gt=0"`
 	Name        string  `json:"name" binding:"required,min=3,max=50"`
 	Description string  `json:"description" binding:"omitempty,max=255"`
@@ -8,7 +8,7 @@ type CreateProductRequest struct {
 	Stock       int     `json:"stock" binding:"required,gte=0"`
 }
 
-type UpdateProductRequest struct {
+type UpdateRequest struct {
 	ID          string   `json:"id" binding:"required"`
 	CategoryID  *string  `json:"category_id,omitempty"`
 	Name        *string  `json:"name" binding:"omitempty,min=3,max=50"`

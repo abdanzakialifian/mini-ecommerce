@@ -1,6 +1,6 @@
 package product
 
-type Product struct {
+type Data struct {
 	ID          string
 	CategoryID  string
 	Name        string
@@ -9,7 +9,7 @@ type Product struct {
 	Stock       int
 }
 
-type UpdateProduct struct {
+type Update struct {
 	ID          string
 	CategoryID  *string
 	Name        *string

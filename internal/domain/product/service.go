@@ -5,10 +5,10 @@ import (
 	"mini-ecommerce/internal/helper"
 )
 
-type ProductService interface {
-	CreateProduct(ctx context.Context, product *Product) *helper.AppError
-	GetProduct(ctx context.Context, id string) (Product, *helper.AppError)
-	GetProducts(ctx context.Context) ([]Product, *helper.AppError)
-	UpdateProduct(ctx context.Context, updateProduct *UpdateProduct) *helper.AppError
-	DeleteProduct(ctx context.Context, id string) *helper.AppError
+type Service interface {
+	Create(ctx context.Context, data *Data) *helper.AppError
+	Get(ctx context.Context, id string) (Data, *helper.AppError)
+	GetAll(ctx context.Context) ([]Data, *helper.AppError)
+	Update(ctx context.Context, update *Update) *helper.AppError
+	Delete(ctx context.Context, id string) *helper.AppError
 }

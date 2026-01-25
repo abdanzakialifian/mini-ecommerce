@@ -16,21 +16,21 @@ type productRepositoryImpl struct {
 	tx *helper.Transaction
 }
 
-func NewProductRepositoryImpl(db *pgxpool.Pool, tx *helper.Transaction) product.ProductRepository {
+func NewProduct(db *pgxpool.Pool, tx *helper.Transaction) product.Repository {
 	return &productRepositoryImpl{db: db, tx: tx}
 }
 
-func (p *productRepositoryImpl) Create(ctx context.Context, product *product.Product) error {
+func (p *productRepositoryImpl) Create(ctx context.Context, data *product.Data) error {
 	query := "INSERT INTO products (category_id, name, description, price, stock) VALUES ($1, $2, $3, $4, $5) RETURNING id"
 	err := p.db.QueryRow(
 		ctx,
 		query,
-		product.CategoryID,
-		product.Name,
-		product.Description,
-		product.Price,
-		product.Stock,
-	).Scan(&product.ID)
+		data.CategoryID,
+		data.Name,
+		data.Description,
+		data.Price,
+		data.Stock,
+	).Scan(&data.ID)
 
 	if err != nil {
 		var pgErr *pgconn.PgError
@@ -43,34 +43,34 @@ func (p *productRepositoryImpl) Create(ctx context.Context, product *product.Pro
 	return nil
 }
 
-func (p *productRepositoryImpl) Find(ctx context.Context, id string) (product.Product, error) {
+func (p *productRepositoryImpl) Find(ctx context.Context, id string) (product.Data, error) {
 	query := "SELECT id, category_id, name, description, price, stock FROM products WHERE id = $1"
-	var result product.Product
+	var productData product.Data
 	err := p.db.QueryRow(
 		ctx,
 		query,
 		id,
 	).Scan(
-		&result.ID,
-		&result.CategoryID,
-		&result.Name,
-		&result.Description,
-		&result.Price,
-		&result.Stock,
+		&productData.ID,
+		&productData.CategoryID,
+		&productData.Name,
+		&productData.Description,
+		&productData.Price,
+		&productData.Stock,
 	)
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return product.Product{}, helper.ErrProductNotFound
+			return product.Data{}, helper.ErrProductNotFound
 		}
 
-		return product.Product{}, err
+		return product.Data{}, err
 	}
 
-	return result, nil
+	return productData, nil
 }
 
-func (p *productRepositoryImpl) FindAll(ctx context.Context) ([]product.Product, error) {
+func (p *productRepositoryImpl) FindAll(ctx context.Context) ([]product.Data, error) {
 	query := "SELECT id, category_id, name, description, price, stock FROM products"
 	rows, err := p.db.Query(ctx, query)
 	if err != nil {
@@ -78,48 +78,48 @@ func (p *productRepositoryImpl) FindAll(ctx context.Context) ([]product.Product,
 	}
 	defer rows.Close()
 
-	var results []product.Product
+	var products []product.Data
 
 	for rows.Next() {
-		var product product.Product
+		var productData product.Data
 		if err := rows.Scan(
-			&product.ID,
-			&product.CategoryID,
-			&product.Name,
-			&product.Description,
-			&product.Price,
-			&product.Stock,
+			&productData.ID,
+			&productData.CategoryID,
+			&productData.Name,
+			&productData.Description,
+			&productData.Price,
+			&productData.Stock,
 		); err != nil {
 			return nil, err
 		}
-		results = append(results, product)
+		products = append(products, productData)
 	}
 
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 
-	return results, nil
+	return products, nil
 }
 
-func (p *productRepositoryImpl) Update(ctx context.Context, updateProduct *product.UpdateProduct) error {
+func (p *productRepositoryImpl) Update(ctx context.Context, update *product.Update) error {
 	query := "UPDATE products SET category_id = COALESCE($1, category_id), name = COALESCE($2, name), description = COALESCE($3, description), price = COALESCE($4, price), stock = COALESCE($5, stock), updated_at = NOW() WHERE id = $6 RETURNING id, category_id, name, description, price, stock"
 	err := p.db.QueryRow(
 		ctx,
 		query,
-		updateProduct.CategoryID,
-		updateProduct.Name,
-		updateProduct.Description,
-		updateProduct.Price,
-		updateProduct.Stock,
-		updateProduct.ID,
+		update.CategoryID,
+		update.Name,
+		update.Description,
+		update.Price,
+		update.Stock,
+		update.ID,
 	).Scan(
-		&updateProduct.ID,
-		&updateProduct.CategoryID,
-		&updateProduct.Name,
-		&updateProduct.Description,
-		&updateProduct.Price,
-		&updateProduct.Stock,
+		&update.ID,
+		&update.CategoryID,
+		&update.Name,
+		&update.Description,
+		&update.Price,
+		&update.Stock,
 	)
 
 	if err != nil {
