@@ -16,8 +16,8 @@ type orderServiceImpl struct {
 	productRepository   product.Repository
 }
 
-func NewOrder(tx *helper.Transaction, orderRepository order.Repository, orderItemRepository order.ItemRepository) order.Service {
-	return &orderServiceImpl{tx: tx, orderRepository: orderRepository, orderItemRepository: orderItemRepository}
+func NewOrder(tx *helper.Transaction, orderRepository order.Repository, orderItemRepository order.ItemRepository, productRepository product.Repository) order.Service {
+	return &orderServiceImpl{tx: tx, orderRepository: orderRepository, orderItemRepository: orderItemRepository, productRepository: productRepository}
 }
 
 func (o *orderServiceImpl) Create(ctx context.Context, userId int, newItems []order.NewItem) (order.Detail, *helper.AppError) {

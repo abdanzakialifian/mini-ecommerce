@@ -19,7 +19,7 @@ func NewOrder(tx *helper.Transaction) order.Repository {
 
 func (o *orderRepositoryImpl) Create(ctx context.Context, data *order.Data) error {
 	db := o.tx.GetTx(ctx)
-	query := "INSET INTO orders (user_id, total_price, status) VALUES ($1, $2, $3) RETURNING id"
+	query := "INSERT INTO orders (user_id, total_price, status) VALUES ($1, $2, $3) RETURNING id"
 	return db.QueryRow(
 		ctx,
 		query,
@@ -104,22 +104,6 @@ func (o *orderRepositoryImpl) UpdateStatus(ctx context.Context, id int, status o
 	db := o.tx.GetTx(ctx)
 	query := "UPDATE orders SET status = $1, updated_at = NOW() WHERE id = $2"
 	cmd, err := db.Exec(ctx, query, status, id)
-	if err != nil {
-		return err
-	}
-
-	if cmd.RowsAffected() == 0 {
-		return helper.ErrOrderNotFound
-	}
-
-	return nil
-}
-
-func (o *orderRepositoryImpl) Delete(ctx context.Context, id int) error {
-	db := o.tx.GetTx(ctx)
-	query := "DELETE FROM orders WHERE id = $1"
-	cmd, err := db.Exec(ctx, query, id)
-
 	if err != nil {
 		return err
 	}

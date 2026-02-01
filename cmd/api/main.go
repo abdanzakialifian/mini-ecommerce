@@ -53,7 +53,7 @@ func main() {
 
 	orderRepository := repository.NewOrder(tx)
 	orderItemRepository := repository.NewOrderItem(tx)
-	orderService := service.NewOrder(tx, orderRepository, orderItemRepository)
+	orderService := service.NewOrder(tx, orderRepository, orderItemRepository, productRepository)
 	orderHandler := order.NewHandler(orderService)
 
 	r := gin.New()
